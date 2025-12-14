@@ -1,7 +1,49 @@
-// app.js (KHUNG PRO: theme persist + nav animation + sidebar pro)
+// app.js (KHUNG PRO: theme persist + nav animation + sidebar + settings + toast + settings state)
 
 (function () {
   const root = document.getElementById("twan-root");
+
+  // ===== TOAST =====
+  const toastEl = document.getElementById("toast");
+  function toast(msg) {
+    if (!toastEl) return;
+    toastEl.textContent = msg;
+    toastEl.classList.add("show");
+    clearTimeout(toastEl._t);
+    toastEl._t = setTimeout(() => toastEl.classList.remove("show"), 1400);
+  }
+  window.TwanToast = { show: toast };
+
+  // ===== SETTINGS STATE =====
+  const SETTINGS_KEY = "twanhub_settings_v1";
+  const defaults = { sound: true, reduceMotion: false };
+  function loadSettings() {
+    try {
+      const raw = localStorage.getItem(SETTINGS_KEY);
+      const obj = raw ? JSON.parse(raw) : {};
+      return { ...defaults, ...(obj || {}) };
+    } catch (_) {
+      return { ...defaults };
+    }
+  }
+  function saveSettings(s) {
+    try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)); } catch (_) {}
+  }
+  const settings = loadSettings();
+
+  function applyReduceMotion(on) {
+    if (!root) return;
+    root.dataset.reduceMotion = on ? "true" : "false";
+  }
+  applyReduceMotion(!!settings.reduceMotion);
+
+  window.TwanSettings = {
+    get soundEnabled() { return !!settings.sound; },
+    setSoundEnabled(v) { settings.sound = !!v; saveSettings(settings); },
+    get reduceMotion() { return !!settings.reduceMotion; },
+    setReduceMotion(v) { settings.reduceMotion = !!v; saveSettings(settings); applyReduceMotion(!!v); },
+    toast,
+  };
 
   // ===== THEME (persist) =====
   const THEME_KEY = "twanhub_theme";
@@ -26,7 +68,6 @@
     try { localStorage.setItem(THEME_KEY, mode); } catch (_) {}
   }
 
-  // init theme from storage
   try {
     const saved = localStorage.getItem(THEME_KEY);
     if (saved === "dark" || saved === "light") setTheme(saved);
@@ -55,25 +96,18 @@
     const current = getActiveSection();
     if (current && current.id === id) return;
 
-    // animate out current
     if (current) {
       current.classList.add("is-leaving");
-      // after out animation, hide it
-      setTimeout(() => {
-        current.classList.remove("is-active", "is-leaving");
-      }, 170);
+      setTimeout(() => current.classList.remove("is-active", "is-leaving"), 170);
     }
 
-    // show new
     target.classList.add("is-active");
     target.classList.remove("is-leaving");
 
-    // highlight buttons
     navButtons.forEach((btn) => {
       btn.classList.toggle("is-active", btn.dataset.sectionTarget === id);
     });
 
-    // scroll to top of main content
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -84,10 +118,9 @@
     });
   });
 
-  // default home
   activateSection("home-section");
 
-  // ===== SIDEBAR (pro) =====
+  // ===== SIDEBAR =====
   const sidebar = document.getElementById("twan-sidebar");
   const backdrop = document.getElementById("sidebar-backdrop");
   const btnOpenSidebar = document.getElementById("btn-open-sidebar");
@@ -99,7 +132,6 @@
     sidebar.setAttribute("aria-hidden", "false");
     document.body.style.overflow = "hidden";
   }
-
   function closeSidebar() {
     if (!sidebar) return;
     sidebar.classList.remove("is-open");
@@ -110,10 +142,6 @@
   btnOpenSidebar?.addEventListener("click", openSidebar);
   btnCloseSidebar?.addEventListener("click", closeSidebar);
   backdrop?.addEventListener("click", closeSidebar);
-
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") closeSidebar();
-  });
 
   // click sidebar links -> go + close
   const sidebarLinks = sidebar?.querySelectorAll("[data-section-target]");
@@ -127,26 +155,90 @@
     });
   });
 
-  // ===== LOCAL STORAGE DEMO (notes) =====
+  // ===== SETTINGS MODAL =====
+  const settingsModal = document.getElementById("settings-modal");
+  const btnOpenSettings = document.getElementById("btn-open-settings");
+  const btnCloseSettings = document.getElementById("btn-close-settings");
+  const settingsBackdrop = document.getElementById("settings-backdrop");
+  const toggleSound = document.getElementById("toggle-sound");
+  const toggleReduce = document.getElementById("toggle-reduce-motion");
+
+  function openSettings() {
+    if (!settingsModal) return;
+    settingsModal.classList.add("is-open");
+    settingsModal.setAttribute("aria-hidden", "false");
+  }
+  function closeSettings() {
+    if (!settingsModal) return;
+    settingsModal.classList.remove("is-open");
+    settingsModal.setAttribute("aria-hidden", "true");
+  }
+
+  btnOpenSettings?.addEventListener("click", openSettings);
+  btnCloseSettings?.addEventListener("click", closeSettings);
+  settingsBackdrop?.addEventListener("click", closeSettings);
+
+  // init toggles
+  if (toggleSound) toggleSound.checked = !!settings.sound;
+  if (toggleReduce) toggleReduce.checked = !!settings.reduceMotion;
+
+  toggleSound?.addEventListener("change", () => {
+    window.TwanSettings.setSoundEnabled(toggleSound.checked);
+    toast(toggleSound.checked ? "🔊 Âm thanh: ON" : "🔇 Âm thanh: OFF");
+  });
+
+  toggleReduce?.addEventListener("change", () => {
+    window.TwanSettings.setReduceMotion(toggleReduce.checked);
+    toast(toggleReduce.checked ? "🧊 Reduce motion: ON" : "🔥 Reduce motion: OFF");
+  });
+
+  // clear actions
   const notesArea = document.getElementById("notes-area");
   const quickNote = document.getElementById("quick-note");
 
   const NOTES_KEY = "twanhub_notes";
   const QUICK_KEY = "twanhub_quick_note";
+  const RECENT_CITIES_KEY = "twanhub_recent_cities";
 
+  // restore notes
   if (notesArea) {
     try { notesArea.value = localStorage.getItem(NOTES_KEY) || ""; } catch (_) {}
     notesArea.addEventListener("input", () => {
       try { localStorage.setItem(NOTES_KEY, notesArea.value); } catch (_) {}
     });
   }
-
   if (quickNote) {
     try { quickNote.value = localStorage.getItem(QUICK_KEY) || ""; } catch (_) {}
     quickNote.addEventListener("input", () => {
       try { localStorage.setItem(QUICK_KEY, quickNote.value); } catch (_) {}
     });
   }
+
+  document.getElementById("btn-clear-notes")?.addEventListener("click", () => {
+    if (notesArea) notesArea.value = "";
+    try { localStorage.removeItem(NOTES_KEY); } catch (_) {}
+    toast("🧹 Đã xóa Notes");
+  });
+
+  document.getElementById("btn-clear-quick")?.addEventListener("click", () => {
+    if (quickNote) quickNote.value = "";
+    try { localStorage.removeItem(QUICK_KEY); } catch (_) {}
+    toast("🧹 Đã xóa Quick Note");
+  });
+
+  document.getElementById("btn-clear-recent-cities")?.addEventListener("click", () => {
+    try { localStorage.removeItem(RECENT_CITIES_KEY); } catch (_) {}
+    if (window.TwanWeather?.init) window.TwanWeather.init(); // re-render chips
+    toast("🧹 Đã xóa Recent Cities");
+  });
+
+  // ESC closes both
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      closeSidebar();
+      closeSettings();
+    }
+  });
 
   // ===== INIT MODULES =====
   if (window.TwanWeather) window.TwanWeather.init();
