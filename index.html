@@ -215,6 +215,7 @@
                     placeholder="Nhập tên thành phố (vd: Busan, Seoul, Tokyo...)"
                   />
                   <button class="btn-secondary" type="submit">Cập nhật vị trí</button>
+                  <div class="chips-row" id="recent-cities"></div>
                 </form>
                 <p class="tool-hint">
                   Gõ tiếng Anh thường chính xác hơn. Recent city sẽ hiện ngay dưới.
@@ -231,6 +232,45 @@
 
                 <div class="tool-card">
                   <h3 class="tool-subtitle">🌡 Thời tiết</h3>
+                  <div class="tool-card">
+  <h3 class="tool-subtitle">🌬 Chất lượng không khí (AQI)</h3>
+
+  <div class="aqi-top">
+    <div>
+      <div class="weather-label">Tình trạng</div>
+      <div id="aqi-badge" class="aqi-badge">—</div>
+    </div>
+
+    <div class="aqi-big">
+      <div class="aqi-label">US AQI</div>
+      <div id="aqi-value" class="aqi-value">—</div>
+    </div>
+  </div>
+
+  <div class="weather-row">
+    <div>
+      <div class="weather-label">PM2.5</div>
+      <div id="aqi-pm25" class="weather-value">—</div>
+    </div>
+    <div>
+      <div class="weather-label">PM10</div>
+      <div id="aqi-pm10" class="weather-value">—</div>
+    </div>
+  </div>
+
+  <div class="weather-row">
+    <div>
+      <div class="weather-label">O₃</div>
+      <div id="aqi-o3" class="weather-value">—</div>
+    </div>
+    <div>
+      <div class="weather-label">NO₂</div>
+      <div id="aqi-no2" class="weather-value">—</div>
+    </div>
+  </div>
+
+  <p id="aqi-note" class="tool-note">Nhập thành phố để lấy AQI.</p>
+</div>
                   <p id="weather-summary" class="tool-label">Chưa có dữ liệu.</p>
                   <div class="weather-row">
                     <div>
@@ -455,3 +495,4 @@
   <script src="js/app.js"></script>
 </body>
 </html>
+
