@@ -1,6 +1,6 @@
 // weather.js
-// Open-Meteo (free, no key) + Geocoding Open-Meteo
-// Goal: chỉ hiển thị khi user nhập thành phố (bỏ giờ local)
+// Open-Meteo (free, no key) + Geocoding Open-Meteo + Air Quality (AQI)
+// Goal: chỉ hiển thị khi user nhập thành phố + panel hoành tráng (icon + AQI)
 
 window.TwanWeather = (function () {
   // ====== DOM ======
@@ -51,6 +51,18 @@ window.TwanWeather = (function () {
     if (weatherUv) weatherUv.textContent = "—";
     if (sunriseEl) sunriseEl.textContent = "—";
     if (sunsetEl) sunsetEl.textContent = "—";
+
+    // AQI block reset (if exists)
+    const aqiBadge = document.getElementById("aqi-badge");
+    const aqiValue = document.getElementById("aqi-value");
+    const pm25 = document.getElementById("pm25");
+    const pm10 = document.getElementById("pm10");
+    const aqiHint = document.getElementById("aqi-hint");
+    if (aqiBadge) aqiBadge.textContent = "AQI —";
+    if (aqiValue) aqiValue.textContent = "—";
+    if (pm25) pm25.textContent = "—";
+    if (pm10) pm10.textContent = "—";
+    if (aqiHint) aqiHint.textContent = "Chưa có dữ liệu.";
   }
 
   function safeNum(n) {
@@ -59,14 +71,11 @@ window.TwanWeather = (function () {
 
   function toTimeOnly(isoStr) {
     if (!isoStr) return "—";
-    // open-meteo returns "YYYY-MM-DDTHH:MM"
     const parts = String(isoStr).split("T");
     return parts[1] || isoStr;
   }
 
   function viWeatherText(code) {
-    // Open-Meteo weathercode mapping
-    // https://open-meteo.com/en/docs
     const map = {
       0: "Trời quang",
       1: "Chủ yếu quang",
@@ -100,6 +109,22 @@ window.TwanWeather = (function () {
     return map[code] ?? "Thời tiết không xác định";
   }
 
+  function weatherEmoji(code) {
+    if (code == null) return "🌤️";
+    if (code === 0) return "☀️";
+    if (code === 1) return "🌤️";
+    if (code === 2) return "⛅";
+    if (code === 3) return "☁️";
+    if (code === 45 || code === 48) return "🌫️";
+    if (code >= 51 && code <= 57) return "🌦️";
+    if (code >= 61 && code <= 67) return "🌧️";
+    if (code >= 71 && code <= 77) return "🌨️";
+    if (code >= 80 && code <= 82) return "🌧️";
+    if (code === 85 || code === 86) return "🌨️";
+    if (code >= 95) return "⛈️";
+    return "🌤️";
+  }
+
   function saveRecentCity(query, placeLabel) {
     const item = { q: query, label: placeLabel, at: Date.now() };
     let arr = [];
@@ -109,7 +134,6 @@ window.TwanWeather = (function () {
     } catch (_) {
       arr = [];
     }
-    // remove duplicates by q (case-insensitive)
     const lowerQ = String(query).toLowerCase();
     arr = arr.filter((x) => String(x?.q || "").toLowerCase() !== lowerQ);
     arr.unshift(item);
@@ -132,33 +156,22 @@ window.TwanWeather = (function () {
   function renderRecentChips() {
     if (!cityForm) return;
 
-    // create a chips row under the form (only once)
     let chips = document.getElementById("recent-cities-chips");
     if (!chips) {
       chips = document.createElement("div");
       chips.id = "recent-cities-chips";
-      chips.style.display = "flex";
-      chips.style.flexWrap = "wrap";
-      chips.style.gap = "6px";
-      chips.style.marginTop = "8px";
-      chips.style.alignItems = "center";
+      chips.className = "chips-row";
       cityForm.insertAdjacentElement("afterend", chips);
     }
 
     const recents = getRecentCities();
-    if (!recents.length) {
-      chips.innerHTML = "";
-      return;
-    }
-
     chips.innerHTML = "";
+    if (!recents.length) return;
+
     recents.forEach((r) => {
       const b = document.createElement("button");
       b.type = "button";
-      b.className = "btn-ghost";
-      b.style.padding = "6px 10px";
-      b.style.fontSize = "12px";
-      b.style.borderRadius = "999px";
+      b.className = "chip-btn";
       b.textContent = r.label || r.q || "Recent";
       b.addEventListener("click", () => {
         if (cityInput) cityInput.value = r.q || "";
@@ -169,16 +182,63 @@ window.TwanWeather = (function () {
 
     const clearBtn = document.createElement("button");
     clearBtn.type = "button";
-    clearBtn.className = "btn-ghost";
-    clearBtn.style.padding = "6px 10px";
-    clearBtn.style.fontSize = "12px";
-    clearBtn.style.borderRadius = "999px";
+    clearBtn.className = "chip-btn chip-danger";
     clearBtn.textContent = "✕ Xóa recent";
     clearBtn.addEventListener("click", () => {
       try { localStorage.removeItem(RECENT_KEY); } catch (_) {}
       renderRecentChips();
     });
     chips.appendChild(clearBtn);
+  }
+
+  function ensureAQICardExists() {
+    // Insert an AQI card into the same tool-grid (after Weather card)
+    const grid = document.querySelector('[data-tool-panel="time-weather"] .tool-grid');
+    if (!grid) return;
+
+    if (document.getElementById("aqi-card")) return;
+
+    const card = document.createElement("div");
+    card.className = "tool-card";
+    card.id = "aqi-card";
+    card.innerHTML = `
+      <h3 class="tool-subtitle">🫁 Chất lượng không khí</h3>
+      <div class="aqi-top">
+        <div id="aqi-badge" class="aqi-badge">AQI —</div>
+        <div class="aqi-big">
+          <div class="aqi-label">US AQI</div>
+          <div id="aqi-value" class="aqi-value">—</div>
+        </div>
+      </div>
+
+      <div class="weather-row">
+        <div>
+          <div class="weather-label">PM2.5</div>
+          <div id="pm25" class="weather-value">—</div>
+        </div>
+        <div>
+          <div class="weather-label">PM10</div>
+          <div id="pm10" class="weather-value">—</div>
+        </div>
+      </div>
+
+      <p id="aqi-hint" class="tool-note">Chưa có dữ liệu.</p>
+    `;
+
+    // Insert after the 2nd card in grid (Time + Weather), else append
+    const cards = grid.querySelectorAll(".tool-card");
+    if (cards.length >= 2) cards[1].insertAdjacentElement("afterend", card);
+    else grid.appendChild(card);
+  }
+
+  function aqiLevel(aqi) {
+    if (aqi == null) return { label: "—", cls: "" };
+    if (aqi <= 50) return { label: "Tốt", cls: "good" };
+    if (aqi <= 100) return { label: "Trung bình", cls: "moderate" };
+    if (aqi <= 150) return { label: "Kém", cls: "unhealthy-sg" };
+    if (aqi <= 200) return { label: "Xấu", cls: "unhealthy" };
+    if (aqi <= 300) return { label: "Rất xấu", cls: "very" };
+    return { label: "Nguy hại", cls: "hazard" };
   }
 
   // ====== CLOCK ======
@@ -195,7 +255,6 @@ window.TwanWeather = (function () {
 
     const tick = () => {
       const now = new Date();
-
       const timeOptions = {
         timeZone: timezone,
         hour12: false,
@@ -210,7 +269,6 @@ window.TwanWeather = (function () {
         month: "2-digit",
         day: "2-digit",
       };
-
       if (timeCurrent) timeCurrent.textContent = now.toLocaleTimeString("vi-VN", timeOptions);
       if (timeDate) timeDate.textContent = now.toLocaleDateString("vi-VN", dateOptions);
     };
@@ -227,7 +285,6 @@ window.TwanWeather = (function () {
 
     const geoRes = await fetch(geoUrl, { cache: "no-store" });
     const geoData = await geoRes.json();
-
     if (!geoData?.results?.length) return null;
 
     const place = geoData.results[0];
@@ -242,7 +299,6 @@ window.TwanWeather = (function () {
   }
 
   async function fetchForecast(lat, lon, timezone) {
-    // add more current vars for a more "pro" panel
     const weatherUrl =
       `https://api.open-meteo.com/v1/forecast` +
       `?latitude=${lat}&longitude=${lon}` +
@@ -254,11 +310,24 @@ window.TwanWeather = (function () {
     return wRes.json();
   }
 
+  async function fetchAirQuality(lat, lon, timezone) {
+    // using time-zone to align "current" correctly
+    const url =
+      `https://air-quality-api.open-meteo.com/v1/air-quality` +
+      `?latitude=${lat}&longitude=${lon}` +
+      `&current=us_aqi,pm2_5,pm10` +
+      `&timezone=${encodeURIComponent(timezone)}`;
+
+    const res = await fetch(url, { cache: "no-store" });
+    return res.json();
+  }
+
   // ====== MAIN FLOW ======
   async function fetchWeatherForCity(cityName) {
     const q = String(cityName || "").trim();
     if (!q) return;
 
+    ensureAQICardExists();
     setLoading(true);
 
     try {
@@ -270,16 +339,16 @@ window.TwanWeather = (function () {
       }
 
       currentPlace = place;
-
-      // set city label
       if (timeCityLabel) timeCityLabel.textContent = place.cityLabel;
-
-      // start clock (only after choosing city)
       startClock(place.timezone);
 
-      // fetch weather
-      const wData = await fetchForecast(place.lat, place.lon, place.timezone);
+      // load weather + AQI in parallel
+      const [wData, aData] = await Promise.all([
+        fetchForecast(place.lat, place.lon, place.timezone),
+        fetchAirQuality(place.lat, place.lon, place.timezone),
+      ]);
 
+      // WEATHER
       const curr = wData?.current || {};
       const daily = wData?.daily || {};
 
@@ -303,32 +372,59 @@ window.TwanWeather = (function () {
       if (sunsetEl) sunsetEl.textContent = toTimeOnly(sunset);
 
       const desc = code != null ? viWeatherText(code) : "—";
+      const emoji = weatherEmoji(code);
 
-      // richer summary text
       const parts = [];
       parts.push(`📍 ${place.cityLabel}`);
-      parts.push(`• ${desc}`);
+      parts.push(`• ${emoji} ${desc}`);
       if (temp != null) parts.push(`• ${temp.toFixed(1)}°C`);
       if (feels != null) parts.push(`• Cảm giác: ${feels.toFixed(1)}°C`);
       if (pressure != null) parts.push(`• Áp suất: ${Math.round(pressure)} hPa`);
-
       if (weatherSummary) weatherSummary.textContent = parts.join(" ");
 
-      setLoading(false);
+      // AQI
+      const aCurr = aData?.current || {};
+      const usAqi = safeNum(aCurr.us_aqi);
+      const pm25v = safeNum(aCurr.pm2_5);
+      const pm10v = safeNum(aCurr.pm10);
 
-      // save recent city
+      const aqiBadge = document.getElementById("aqi-badge");
+      const aqiValue = document.getElementById("aqi-value");
+      const pm25 = document.getElementById("pm25");
+      const pm10 = document.getElementById("pm10");
+      const aqiHint = document.getElementById("aqi-hint");
+
+      if (aqiValue) aqiValue.textContent = usAqi != null ? String(Math.round(usAqi)) : "—";
+      if (pm25) pm25.textContent = pm25v != null ? `${pm25v.toFixed(1)} μg/m³` : "—";
+      if (pm10) pm10.textContent = pm10v != null ? `${pm10v.toFixed(1)} μg/m³` : "—";
+
+      if (aqiBadge) {
+        const lvl = aqiLevel(usAqi);
+        aqiBadge.className = `aqi-badge ${lvl.cls || ""}`;
+        aqiBadge.textContent = usAqi != null ? `AQI ${Math.round(usAqi)} • ${lvl.label}` : "AQI —";
+      }
+
+      if (aqiHint) {
+        if (usAqi == null) aqiHint.textContent = "Không có dữ liệu AQI ở khu vực này.";
+        else {
+          const lvl = aqiLevel(usAqi);
+          aqiHint.textContent = `Gợi ý: mức “${lvl.label}”. Nếu AQI cao, hạn chế hoạt động ngoài trời / đeo khẩu trang.`;
+        }
+      }
+
+      setLoading(false);
       saveRecentCity(q, place.cityLabel);
     } catch (err) {
       console.error(err);
       setLoading(false);
-      if (weatherSummary) weatherSummary.textContent = "❌ Không lấy được dữ liệu thời tiết (có thể do mạng/net).";
+      if (weatherSummary) weatherSummary.textContent = "❌ Không lấy được dữ liệu (có thể do mạng/net).";
     }
   }
 
   function init() {
-    // start with clean state (no local clock)
     clearOutputs();
     renderRecentChips();
+    ensureAQICardExists();
 
     cityForm?.addEventListener("submit", (e) => {
       e.preventDefault();
