@@ -28,9 +28,56 @@
           <span class="theme-icon">🌞</span>
           <span class="theme-label">Light</span>
         </button>
-        <div class="avatar-badge" title="Tú">T</div>
+
+        <!-- SETTINGS -->
+        <button class="icon-button" id="btn-open-settings" aria-label="Open settings">⚙️</button>
       </div>
     </header>
+
+    <!-- SETTINGS MODAL -->
+    <div class="modal" id="settings-modal" aria-hidden="true">
+      <div class="modal-backdrop" id="settings-backdrop"></div>
+      <div class="modal-card" role="dialog" aria-modal="true" aria-label="Settings">
+        <div class="modal-head">
+          <div class="modal-title">⚙️ Cài đặt</div>
+          <button class="icon-button" id="btn-close-settings" aria-label="Close settings">✕</button>
+        </div>
+
+        <div class="settings-list">
+          <div class="setting-row">
+            <div>
+              <div class="setting-name">Âm thanh</div>
+              <div class="setting-desc">Timer hết giờ sẽ “ting”, bấm nút có click nhẹ.</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="toggle-sound" />
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div class="setting-row">
+            <div>
+              <div class="setting-name">Giảm chuyển động</div>
+              <div class="setting-desc">Tắt animation nếu muốn mượt/đỡ chóng mặt.</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="toggle-reduce-motion" />
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div class="setting-row setting-actions">
+            <button class="btn-ghost" id="btn-clear-notes">🧹 Xóa Notes</button>
+            <button class="btn-ghost" id="btn-clear-quick">🧹 Xóa Quick Note</button>
+            <button class="btn-ghost" id="btn-clear-recent-cities">🧹 Xóa Recent Cities</button>
+          </div>
+
+          <p class="tool-note">
+            Tip: bấm <code>ESC</code> để đóng settings.
+          </p>
+        </div>
+      </div>
+    </div>
 
     <!-- SIDEBAR OVERLAY -->
     <aside class="twan-sidebar" id="twan-sidebar" aria-hidden="true">
@@ -87,7 +134,7 @@
                 <li>1 tài nguyên cần gom vào kho</li>
               </ul>
               <p class="info-note">
-                TwanHub V2 (Supabase + Mini AI) đang dần hoàn thiện. Sau khi ổn định, mình gắn GPT thật + build APK.
+                TwanHub V2 đang dần hoàn thiện. Xong khung → tools xịn → rồi mới gắn cloud/AI.
               </p>
             </div>
           </div>
@@ -143,20 +190,20 @@
             <!-- Tool tabs -->
             <div class="tool-tabs">
               <button class="tool-tab is-active" data-tool-tab="time-weather">
-                ⏰ Thời gian & Thời tiết
+                ⏰ Time & Weather
               </button>
               <button class="tool-tab" data-tool-tab="timer-stopwatch">
                 ⏱ Timer & Stopwatch
               </button>
               <button class="tool-tab" data-tool-tab="calculator">
-                🧮 Máy tính onl
+                🧮 Calculator PRO
               </button>
               <button class="tool-tab" data-tool-tab="translator">
-                🌐 Twan Dịch
+                🌐 Twan Dịch PRO
               </button>
             </div>
 
-            <!-- TIME & WEATHER -->
+            <!-- TIME & WEATHER (weather.js đang handle) -->
             <div class="tool-panel is-active" data-tool-panel="time-weather">
               <div class="tool-card">
                 <h2 class="tool-title">📍 Vị trí / thành phố</h2>
@@ -165,12 +212,12 @@
                     id="city-input"
                     class="text-input flex-1"
                     type="text"
-                    placeholder="Nhập tên thành phố (vd: Seoul, Tokyo, Paris...)"
+                    placeholder="Nhập tên thành phố (vd: Busan, Seoul, Tokyo...)"
                   />
                   <button class="btn-secondary" type="submit">Cập nhật vị trí</button>
                 </form>
                 <p class="tool-hint">
-                  Mẹo: Gõ tiếng Anh thường chính xác hơn. Sau này mình có thể lưu lại thành phố hay dùng.
+                  Gõ tiếng Anh thường chính xác hơn. Recent city sẽ hiện ngay dưới.
                 </p>
               </div>
 
@@ -223,12 +270,13 @@
               </div>
             </div>
 
-            <!-- TIMER & STOPWATCH -->
+            <!-- TIMER & STOPWATCH PRO -->
             <div class="tool-panel" data-tool-panel="timer-stopwatch">
               <div class="tool-grid">
                 <div class="tool-card">
-                  <h2 class="tool-title">⏳ Đếm ngược (Timer)</h2>
-                  <div class="timer-inputs">
+                  <h2 class="tool-title">⏳ Đếm ngược (Timer PRO)</h2>
+
+                  <div class="timer-inputs timer-inputs-pro">
                     <label>Giờ
                       <input id="timer-hours" class="number-input" type="number" min="0" value="0" />
                     </label>
@@ -238,67 +286,124 @@
                     <label>Giây
                       <input id="timer-seconds" class="number-input" type="number" min="0" value="0" />
                     </label>
+                    <label>Ms
+                      <input id="timer-ms" class="number-input" type="number" min="0" max="999" value="0" />
+                    </label>
                   </div>
-                  <div id="timer-display" class="time-display">00:00:00</div>
+
+                  <div id="timer-display" class="time-display time-display-pro">00:00:00.000</div>
                   <div class="button-row">
                     <button id="btn-timer-start" class="btn-primary">Bắt đầu</button>
                     <button id="btn-timer-pause" class="btn-secondary">Tạm dừng</button>
                     <button id="btn-timer-reset" class="btn-ghost">Reset</button>
                   </div>
+
+                  <p id="timer-hint" class="tool-note">Hết giờ sẽ “ting” nếu bật Âm thanh.</p>
                 </div>
 
                 <div class="tool-card">
-                  <h2 class="tool-title">🏃 Stopwatch (Bấm giờ)</h2>
-                  <div id="stopwatch-display" class="time-display">00:00.0</div>
+                  <h2 class="tool-title">🏃 Stopwatch PRO</h2>
+
+                  <div id="stopwatch-display" class="time-display time-display-pro">00:00:00.000</div>
+
                   <div class="button-row">
                     <button id="btn-sw-start" class="btn-primary">Start</button>
+                    <button id="btn-sw-lap" class="btn-secondary">Lap</button>
                     <button id="btn-sw-pause" class="btn-secondary">Pause</button>
                     <button id="btn-sw-reset" class="btn-ghost">Reset</button>
+                  </div>
+
+                  <div class="laps-wrap">
+                    <div class="laps-head">
+                      <div class="laps-title">Lap</div>
+                      <button class="btn-ghost btn-mini" id="btn-sw-clear-laps">Clear</button>
+                    </div>
+                    <div id="laps-list" class="laps-list"></div>
                   </div>
                 </div>
               </div>
             </div>
 
-            <!-- CALCULATOR -->
+            <!-- CALCULATOR PRO -->
             <div class="tool-panel" data-tool-panel="calculator">
-              <div class="tool-card">
-                <h2 class="tool-title">🧮 Máy tính khoa học (math.js)</h2>
-                <label class="field-label" for="calc-expression">Biểu thức</label>
-                <input
-                  id="calc-expression"
-                  class="text-input"
-                  type="text"
-                  placeholder="Ví dụ: (2+3)*4, sin(30 deg), sqrt(9)..."
-                />
-                <div class="button-row">
-                  <button id="btn-calc-eval" class="btn-primary">Tính</button>
-                  <button id="btn-calc-clear" class="btn-ghost">Xóa</button>
+              <div class="tool-grid">
+                <div class="tool-card span-2">
+                  <h2 class="tool-title">🧮 Calculator PRO (math.js)</h2>
+
+                  <div class="calc-top">
+                    <input
+                      id="calc-expression"
+                      class="text-input calc-input"
+                      type="text"
+                      placeholder="Nhập biểu thức... (vd: (2+3)*4, sqrt(9), sin(30 deg))"
+                    />
+                    <button id="btn-calc-eval" class="btn-primary">=</button>
+                    <button id="btn-calc-clear" class="btn-ghost">C</button>
+                  </div>
+
+                  <div class="calc-grid" id="calc-grid">
+                    <!-- JS sẽ render keypad -->
+                  </div>
+
+                  <div class="calc-history">
+                    <div class="laps-head">
+                      <div class="laps-title">History</div>
+                      <button class="btn-ghost btn-mini" id="btn-calc-clear-history">Clear</button>
+                    </div>
+                    <div id="calc-history-list" class="history-list"></div>
+                  </div>
+
+                  <div class="tool-result">
+                    <div class="result-label">Kết quả:</div>
+                    <div id="calc-result" class="result-value">—</div>
+                  </div>
                 </div>
-                <div class="tool-result">
-                  <div class="result-label">Kết quả:</div>
-                  <div id="calc-result" class="result-value">—</div>
-                </div>
-                <p class="tool-note">
-                  Dùng cú pháp của <code>math.js</code>. Sau này mình có thể build thêm giao diện nút bấm kiểu Google Calculator.
-                </p>
               </div>
             </div>
 
-            <!-- TRANSLATOR -->
+            <!-- TRANSLATOR PRO -->
             <div class="tool-panel" data-tool-panel="translator">
               <div class="tool-card">
-                <h2 class="tool-title">🌐 Twan Dịch (demo)</h2>
+                <h2 class="tool-title">🌐 Twan Dịch PRO (free)</h2>
+
+                <div class="translator-controls translator-controls-pro">
+                  <select id="trans-from" class="select-input">
+                    <option value="vi">Tiếng Việt</option>
+                    <option value="en">Tiếng Anh</option>
+                    <option value="ko">Tiếng Hàn</option>
+                    <option value="ja">Tiếng Nhật</option>
+                  </select>
+
+                  <button id="btn-trans-swap" class="btn-ghost btn-mini" type="button">⇄</button>
+
+                  <select id="trans-to" class="select-input">
+                    <option value="en">Tiếng Anh</option>
+                    <option value="vi">Tiếng Việt</option>
+                    <option value="ko">Tiếng Hàn</option>
+                    <option value="ja">Tiếng Nhật</option>
+                  </select>
+
+                  <button id="btn-translate" class="btn-primary" type="button">Dịch</button>
+                </div>
+
                 <div class="translator-row">
                   <div class="translator-col">
-                    <label class="field-label" for="trans-source">Văn bản gốc</label>
+                    <div class="mini-row">
+                      <label class="field-label" for="trans-source">Văn bản gốc</label>
+                      <button class="btn-ghost btn-mini" id="btn-copy-source" type="button">Copy</button>
+                    </div>
                     <textarea
                       id="trans-source"
                       class="text-area"
                       placeholder="Nhập câu cần dịch..."
                     ></textarea>
                   </div>
+
                   <div class="translator-col">
-                    <label class="field-label" for="trans-result">Kết quả</label>
+                    <div class="mini-row">
+                      <label class="field-label" for="trans-result">Kết quả</label>
+                      <button class="btn-ghost btn-mini" id="btn-copy-result" type="button">Copy</button>
+                    </div>
                     <textarea
                       id="trans-result"
                       class="text-area"
@@ -307,20 +412,9 @@
                     ></textarea>
                   </div>
                 </div>
-                <div class="translator-controls">
-                  <select id="trans-from" class="select-input">
-                    <option value="vi">Tiếng Việt</option>
-                    <option value="en">Tiếng Anh</option>
-                  </select>
-                  <span>→</span>
-                  <select id="trans-to" class="select-input">
-                    <option value="en">Tiếng Anh</option>
-                    <option value="vi">Tiếng Việt</option>
-                  </select>
-                  <button id="btn-translate" class="btn-primary">Dịch</button>
-                </div>
-                <p class="tool-note">
-                  Hiện tại dùng 1 API dịch free để demo. Sau này mình có thể gắn Google Translate / GPT cho chất lượng hơn.
+
+                <p class="tool-note" id="translate-hint">
+                  Dùng API free (MyMemory). Nếu lỗi do net/giới hạn, bấm lại.
                 </p>
               </div>
             </div>
@@ -348,6 +442,9 @@
         <span class="bottom-label">Tools</span>
       </button>
     </nav>
+
+    <!-- toast -->
+    <div id="toast" class="toast" aria-live="polite"></div>
   </div>
 
   <!-- JS -->
