@@ -3,8 +3,8 @@
 
 window.TwanSupabase = (function () {
   // ⚠️ Điền đúng project của đệ:
-  const SUPABASE_URL = "PASTE_YOUR_SUPABASE_URL_HERE";
-  const SUPABASE_ANON_KEY = "PASTE_YOUR_SUPABASE_ANON_KEY_HERE";
+  const SUPABASE_URL = "https://huhozlbnrztnwmabfevl.supabase.co";
+  const SUPABASE_ANON_KEY = "sb_publishable_EH8VJeLy7ADMX1e43udEOA_4zGwZ1c9";
 
   let supabase = null;
   let user = null;
