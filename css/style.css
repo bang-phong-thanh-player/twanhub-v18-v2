@@ -504,3 +504,69 @@ body {
 }
 
 .bottom-icon { font-size: 16px; }
+/* ===== Weather PRO: chips + AQI ===== */
+.chips-row{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  margin-top:8px;
+  align-items:center;
+}
+
+.chip-btn{
+  border-radius:999px;
+  padding:6px 10px;
+  font-size:12px;
+  border:1px solid rgba(148,163,184,.4);
+  background: rgba(255,255,255,.7);
+  cursor:pointer;
+  color: var(--text-main);
+}
+
+.twan-root[data-theme="dark"] .chip-btn{
+  background: rgba(15,23,42,.7);
+}
+
+.chip-danger{
+  border-color: rgba(239,68,68,.35);
+}
+
+.aqi-top{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  justify-content:space-between;
+  margin-top:6px;
+}
+
+.aqi-badge{
+  padding:6px 10px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:700;
+  border:1px solid rgba(148,163,184,.35);
+  background: rgba(99,102,241,.10);
+}
+
+.aqi-badge.good{ background: rgba(34,197,94,.14); border-color: rgba(34,197,94,.25); }
+.aqi-badge.moderate{ background: rgba(234,179,8,.16); border-color: rgba(234,179,8,.28); }
+.aqi-badge.unhealthy-sg{ background: rgba(249,115,22,.16); border-color: rgba(249,115,22,.28); }
+.aqi-badge.unhealthy{ background: rgba(239,68,68,.16); border-color: rgba(239,68,68,.28); }
+.aqi-badge.very{ background: rgba(168,85,247,.18); border-color: rgba(168,85,247,.30); }
+.aqi-badge.hazard{ background: rgba(2,6,23,.18); border-color: rgba(2,6,23,.30); }
+
+.aqi-big{
+  text-align:right;
+}
+
+.aqi-label{
+  font-size:11px;
+  color: var(--text-sub);
+}
+
+.aqi-value{
+  font-size:22px;
+  font-weight:800;
+  line-height:1;
+  margin-top:2px;
+}
