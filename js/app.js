@@ -1,4 +1,15 @@
-// app.js (KHUNG PRO: theme persist + nav animation + sidebar + settings + toast + settings state)
+// ==== NOTES: Cloud sync via Supabase (online-first) ====
+const notesArea = document.getElementById("notes-area");
+const quickNote = document.getElementById("quick-note");
+
+// Nếu chưa login thì vẫn cho gõ bình thường (nhưng không sync)
+notesArea?.addEventListener("input", () => {
+  window.TwanSupabase?.scheduleSave?.();
+});
+quickNote?.addEventListener("input", () => {
+  window.TwanSupabase?.scheduleSave?.();
+});
+
 
 (function () {
   const root = document.getElementById("twan-root");
