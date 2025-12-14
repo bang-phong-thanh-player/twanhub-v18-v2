@@ -493,6 +493,32 @@
   <script src="js/weather.js"></script>
   <script src="js/supabase.js"></script>
   <script src="js/app.js"></script>
+  <!-- AUTH MODAL -->
+<div id="auth-modal" class="modal">
+  <div class="modal-backdrop" data-close-auth></div>
+  <div class="modal-card">
+    <div class="modal-head">
+      <div class="modal-title">🔐 TwanHub Cloud</div>
+      <button class="icon-button" id="btn-auth-close">✕</button>
+    </div>
+
+    <div class="setting-row" style="align-items:flex-start;">
+      <div>
+        <div class="setting-name">Đăng nhập bằng Email</div>
+        <div class="setting-desc">Gửi link đăng nhập (magic link) qua email. Không cần mật khẩu.</div>
+      </div>
+    </div>
+
+    <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
+      <input id="auth-email" class="text-input" type="email" placeholder="email của đệ..." style="flex:1; min-width:220px;" />
+      <button id="btn-auth-login" class="btn-primary">Gửi link</button>
+      <button id="btn-auth-logout" class="btn-ghost">Logout</button>
+    </div>
+
+    <p id="auth-status" class="tool-note" style="margin-top:10px;">Chưa đăng nhập.</p>
+  </div>
+</div>
 </body>
 </html>
+
 
