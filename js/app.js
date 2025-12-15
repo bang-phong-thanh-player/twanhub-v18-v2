@@ -256,4 +256,8 @@ quickNote?.addEventListener("input", () => {
   if (window.TwanTools) window.TwanTools.init();
   if (window.TwanAI) window.TwanAI.init();
   if (window.TwanSupabase) window.TwanSupabase.init();
+  if (window.TwanStorage) {
+  window.TwanStorage.init();
+}
+
 })();
