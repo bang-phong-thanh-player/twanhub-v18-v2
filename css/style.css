@@ -777,17 +777,20 @@ html, body { overflow-x: hidden; }
 /* ===== PRO ADDONS: settings modal + timer/sw/calc/translator + toast ===== */
 
 /* modal */
-.modal{
+/* ===== MODAL FIX (RẤT QUAN TRỌNG) ===== */
+.modal {
   position: fixed;
   inset: 0;
   z-index: 50;
+
+  /* quan trọng nhất */
   display: none;
+  pointer-events: none;
 }
-.modal.is-open{ display:block; }
-.modal-backdrop{
-  position:absolute; inset:0;
-  background: rgba(2,6,23,.45);
-  backdrop-filter: blur(10px);
+
+.modal.is-open {
+  display: block;
+  pointer-events: auto;
 }
 .modal-card{
   position:absolute;
