@@ -541,8 +541,42 @@
     <p id="auth-status" class="tool-note" style="margin-top:10px;">Chưa đăng nhập.</p>
   </div>
 </div>
+  <!-- SETTINGS MODAL -->
+<div id="settings-modal" class="modal">
+  <div class="modal-backdrop" data-close-settings></div>
+
+  <div class="modal-card">
+    <div class="modal-head">
+      <div class="modal-title">⚙️ Settings</div>
+      <button class="icon-button" id="btn-settings-close">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <h3 style="margin:0 0 8px;">☁️ Cloud (Supabase)</h3>
+
+      <p id="cloud-status" class="tool-note">Chưa đăng nhập.</p>
+
+      <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;">
+        <input
+          id="cloud-email"
+          class="text-input"
+          type="email"
+          placeholder="email của đệ..."
+          style="flex:1; min-width:220px;"
+        />
+        <button id="btn-cloud-login" class="btn-primary">Gửi link</button>
+        <button id="btn-cloud-logout" class="btn-ghost">Logout</button>
+      </div>
+
+      <p class="tool-note" style="margin-top:10px;">
+        Login bằng magic link. Không cần mật khẩu.
+      </p>
+    </div>
+  </div>
+</div>
 </body>
 </html>
+
 
 
 
