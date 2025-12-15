@@ -982,3 +982,26 @@ html, body { overflow-x: hidden; }
   opacity: 1;
   transform: translateX(-50%) translateY(-6px);
 }
+/* ===== AUTH MODAL ===== */
+.modal { position: fixed; inset: 0; z-index: 999; display: none; }
+.modal.is-open { display: block; }
+.modal-backdrop { position: absolute; inset: 0; background: rgba(15,23,42,.45); }
+.modal-card {
+  position: absolute;
+  left: 50%; top: 14%;
+  transform: translateX(-50%);
+  width: min(520px, calc(100% - 22px));
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
+  overflow: hidden;
+}
+.modal-head {
+  display:flex; align-items:center; justify-content:space-between;
+  padding: 12px 14px;
+  background: var(--bg-soft);
+  border-bottom: 1px solid var(--card-border);
+}
+.modal-title { font-weight: 800; }
+.modal-body { padding: 14px; }
