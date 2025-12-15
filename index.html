@@ -199,6 +199,7 @@
                 🧮 Calculator PRO
               </button>
               <button class="tool-tab" data-tool-tab="translator">
+                <button class="tool-tab" data-tool-tab="cloud-files">📁 File Cloud</button>
                 🌐 Twan Dịch PRO
               </button>
             </div>
@@ -221,6 +222,24 @@
                   Gõ tiếng Anh thường chính xác hơn. Recent city sẽ hiện ngay dưới.
                 </p>
               </div>
+              <!-- CLOUD FILES -->
+<div class="tool-panel" data-tool-panel="cloud-files">
+  <div class="tool-card">
+    <h2 class="tool-title">📁 TwanHub Cloud Files</h2>
+    <p class="tool-note">Upload file lên Supabase Storage (chỉ user của đệ thấy). Folder sẽ là <code>user_id/</code>.</p>
+
+    <div class="button-row">
+      <input id="file-picker" class="text-input" type="file" />
+      <button id="btn-upload" class="btn-primary">Upload</button>
+      <button id="btn-refresh-files" class="btn-ghost">Refresh</button>
+    </div>
+
+    <div class="tool-result" style="margin-top:10px;">
+      <div class="result-label">Danh sách file:</div>
+      <div id="files-list" style="margin-top:6px;"></div>
+    </div>
+  </div>
+</div>
 
               <div class="tool-grid">
                 <div class="tool-card">
@@ -523,6 +542,7 @@
 </div>
 </body>
 </html>
+
 
 
 
