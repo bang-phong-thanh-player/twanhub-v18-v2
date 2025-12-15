@@ -259,5 +259,24 @@ quickNote?.addEventListener("input", () => {
   if (window.TwanStorage) {
   window.TwanStorage.init();
 }
+// ==== SETTINGS MODAL (OPEN / CLOSE) ====
+const settingsModal = document.getElementById("settings-modal");
+const btnOpenSettings = document.getElementById("btn-open-settings");
+const btnCloseSettings = document.getElementById("btn-settings-close");
+
+btnOpenSettings?.addEventListener("click", () => {
+  settingsModal?.classList.add("is-open");
+});
+
+btnCloseSettings?.addEventListener("click", () => {
+  settingsModal?.classList.remove("is-open");
+});
+
+// click nền mờ để đóng
+settingsModal
+  ?.querySelector("[data-close-settings]")
+  ?.addEventListener("click", () => {
+    settingsModal.classList.remove("is-open");
+  });
 
 })();
