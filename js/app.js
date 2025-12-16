@@ -1,33 +1,31 @@
+// js/app.js
+
 // ==== NOTES: Cloud sync via Supabase (online-first) ====
-const notesArea = document.getElementById("notes-area");
-const quickNote = document.getElementById("quick-note");
-
 // Nếu chưa login thì vẫn cho gõ bình thường (nhưng không sync)
-notesArea?.addEventListener("input", () => {
-  window.TwanSupabase?.scheduleSave?.();
-});
-quickNote?.addEventListener("input", () => {
-  window.TwanSupabase?.scheduleSave?.();
-});
+const notesAreaTop = document.getElementById("notes-area");
+const quickNoteTop = document.getElementById("quick-note");
 
+notesAreaTop?.addEventListener("input", () => {
+  window.TwanSupabase?.scheduleSave?.();
+});
+quickNoteTop?.addEventListener("input", () => {
+  window.TwanSupabase?.scheduleSave?.();
+});
 
 (function () {
   const root = document.getElementById("twan-root");
 
-  // ===== TOAST =====
-  const toastEl = document.getElementById("toast");
-  function toast(msg) {
-    if (!toastEl) return;
-    toastEl.textContent = msg;
-    toastEl.classList.add("show");
-    clearTimeout(toastEl._t);
-    toastEl._t = setTimeout(() => toastEl.classList.remove("show"), 1400);
-  }
-  window.TwanToast = { show: toast };
+  // ==== ANTI-FREEZE: FORCE CLOSE OVERLAYS ON LOAD ====
+  window.addEventListener("DOMContentLoaded", () => {
+    document.getElementById("settings-modal")?.classList.remove("is-open");
+    document.getElementById("twan-sidebar")?.classList.remove("is-open");
+    document.body.style.overflow = "";
+  });
 
   // ===== SETTINGS STATE =====
   const SETTINGS_KEY = "twanhub_settings_v1";
   const defaults = { sound: true, reduceMotion: false };
+
   function loadSettings() {
     try {
       const raw = localStorage.getItem(SETTINGS_KEY);
@@ -37,9 +35,13 @@ quickNote?.addEventListener("input", () => {
       return { ...defaults };
     }
   }
+
   function saveSettings(s) {
-    try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)); } catch (_) {}
+    try {
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(s));
+    } catch (_) {}
   }
+
   const settings = loadSettings();
 
   function applyReduceMotion(on) {
@@ -49,11 +51,21 @@ quickNote?.addEventListener("input", () => {
   applyReduceMotion(!!settings.reduceMotion);
 
   window.TwanSettings = {
-    get soundEnabled() { return !!settings.sound; },
-    setSoundEnabled(v) { settings.sound = !!v; saveSettings(settings); },
-    get reduceMotion() { return !!settings.reduceMotion; },
-    setReduceMotion(v) { settings.reduceMotion = !!v; saveSettings(settings); applyReduceMotion(!!v); },
-    toast,
+    get soundEnabled() {
+      return !!settings.sound;
+    },
+    setSoundEnabled(v) {
+      settings.sound = !!v;
+      saveSettings(settings);
+    },
+    get reduceMotion() {
+      return !!settings.reduceMotion;
+    },
+    setReduceMotion(v) {
+      settings.reduceMotion = !!v;
+      saveSettings(settings);
+      applyReduceMotion(!!v);
+    },
   };
 
   // ===== THEME (persist) =====
@@ -76,7 +88,9 @@ quickNote?.addEventListener("input", () => {
       }
     }
 
-    try { localStorage.setItem(THEME_KEY, mode); } catch (_) {}
+    try {
+      localStorage.setItem(THEME_KEY, mode);
+    } catch (_) {}
   }
 
   try {
@@ -92,7 +106,7 @@ quickNote?.addEventListener("input", () => {
     setTheme(current === "dark" ? "light" : "dark");
   });
 
-  // ===== SECTION NAV (with animation) =====
+  // ===== SECTION NAV =====
   const navButtons = document.querySelectorAll("[data-section-target]");
   const sections = Array.from(document.querySelectorAll(".twan-section"));
 
@@ -119,7 +133,11 @@ quickNote?.addEventListener("input", () => {
       btn.classList.toggle("is-active", btn.dataset.sectionTarget === id);
     });
 
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    try {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch (_) {
+      window.scrollTo(0, 0);
+    }
   }
 
   navButtons.forEach((btn) => {
@@ -129,11 +147,11 @@ quickNote?.addEventListener("input", () => {
     });
   });
 
+  // default
   activateSection("home-section");
 
   // ===== SIDEBAR =====
   const sidebar = document.getElementById("twan-sidebar");
-  const backdrop = document.getElementById("sidebar-backdrop");
   const btnOpenSidebar = document.getElementById("btn-open-sidebar");
   const btnCloseSidebar = document.getElementById("btn-close-sidebar");
 
@@ -143,6 +161,7 @@ quickNote?.addEventListener("input", () => {
     sidebar.setAttribute("aria-hidden", "false");
     document.body.style.overflow = "hidden";
   }
+
   function closeSidebar() {
     if (!sidebar) return;
     sidebar.classList.remove("is-open");
@@ -152,7 +171,6 @@ quickNote?.addEventListener("input", () => {
 
   btnOpenSidebar?.addEventListener("click", openSidebar);
   btnCloseSidebar?.addEventListener("click", closeSidebar);
-  backdrop?.addEventListener("click", closeSidebar);
 
   // click sidebar links -> go + close
   const sidebarLinks = sidebar?.querySelectorAll("[data-section-target]");
@@ -166,19 +184,22 @@ quickNote?.addEventListener("input", () => {
     });
   });
 
+  // bấm ngoài sidebar (vùng trống) để đóng
+  sidebar?.addEventListener("click", (e) => {
+    if (e.target === sidebar) closeSidebar();
+  });
+
   // ===== SETTINGS MODAL =====
   const settingsModal = document.getElementById("settings-modal");
   const btnOpenSettings = document.getElementById("btn-open-settings");
-  const btnCloseSettings = document.getElementById("btn-close-settings");
-  const settingsBackdrop = document.getElementById("settings-backdrop");
-  const toggleSound = document.getElementById("toggle-sound");
-  const toggleReduce = document.getElementById("toggle-reduce-motion");
+  const btnCloseSettings = document.getElementById("btn-settings-close");
 
   function openSettings() {
     if (!settingsModal) return;
     settingsModal.classList.add("is-open");
     settingsModal.setAttribute("aria-hidden", "false");
   }
+
   function closeSettings() {
     if (!settingsModal) return;
     settingsModal.classList.remove("is-open");
@@ -187,63 +208,57 @@ quickNote?.addEventListener("input", () => {
 
   btnOpenSettings?.addEventListener("click", openSettings);
   btnCloseSettings?.addEventListener("click", closeSettings);
-  settingsBackdrop?.addEventListener("click", closeSettings);
 
-  // init toggles
+  // click nền mờ để đóng (đúng với index.html)
+  settingsModal
+    ?.querySelector("[data-close-settings]")
+    ?.addEventListener("click", closeSettings);
+
+  // ===== INIT SETTINGS TOGGLES (nếu có) =====
+  const toggleSound = document.getElementById("toggle-sound");
+  const toggleReduce = document.getElementById("toggle-reduce-motion");
+
   if (toggleSound) toggleSound.checked = !!settings.sound;
   if (toggleReduce) toggleReduce.checked = !!settings.reduceMotion;
 
   toggleSound?.addEventListener("change", () => {
     window.TwanSettings.setSoundEnabled(toggleSound.checked);
-    toast(toggleSound.checked ? "🔊 Âm thanh: ON" : "🔇 Âm thanh: OFF");
   });
 
   toggleReduce?.addEventListener("change", () => {
     window.TwanSettings.setReduceMotion(toggleReduce.checked);
-    toast(toggleReduce.checked ? "🧊 Reduce motion: ON" : "🔥 Reduce motion: OFF");
   });
 
-  // clear actions
+  // ===== LOCAL STORAGE DEMO CHO NOTES (fallback) =====
   const notesArea = document.getElementById("notes-area");
   const quickNote = document.getElementById("quick-note");
 
   const NOTES_KEY = "twanhub_notes";
   const QUICK_KEY = "twanhub_quick_note";
-  const RECENT_CITIES_KEY = "twanhub_recent_cities";
 
-  // restore notes
   if (notesArea) {
-    try { notesArea.value = localStorage.getItem(NOTES_KEY) || ""; } catch (_) {}
+    try {
+      notesArea.value = localStorage.getItem(NOTES_KEY) || "";
+    } catch (_) {}
     notesArea.addEventListener("input", () => {
-      try { localStorage.setItem(NOTES_KEY, notesArea.value); } catch (_) {}
+      try {
+        localStorage.setItem(NOTES_KEY, notesArea.value);
+      } catch (_) {}
     });
   }
+
   if (quickNote) {
-    try { quickNote.value = localStorage.getItem(QUICK_KEY) || ""; } catch (_) {}
+    try {
+      quickNote.value = localStorage.getItem(QUICK_KEY) || "";
+    } catch (_) {}
     quickNote.addEventListener("input", () => {
-      try { localStorage.setItem(QUICK_KEY, quickNote.value); } catch (_) {}
+      try {
+        localStorage.setItem(QUICK_KEY, quickNote.value);
+      } catch (_) {}
     });
   }
 
-  document.getElementById("btn-clear-notes")?.addEventListener("click", () => {
-    if (notesArea) notesArea.value = "";
-    try { localStorage.removeItem(NOTES_KEY); } catch (_) {}
-    toast("🧹 Đã xóa Notes");
-  });
-
-  document.getElementById("btn-clear-quick")?.addEventListener("click", () => {
-    if (quickNote) quickNote.value = "";
-    try { localStorage.removeItem(QUICK_KEY); } catch (_) {}
-    toast("🧹 Đã xóa Quick Note");
-  });
-
-  document.getElementById("btn-clear-recent-cities")?.addEventListener("click", () => {
-    try { localStorage.removeItem(RECENT_CITIES_KEY); } catch (_) {}
-    if (window.TwanWeather?.init) window.TwanWeather.init(); // re-render chips
-    toast("🧹 Đã xóa Recent Cities");
-  });
-
-  // ESC closes both
+  // ===== ESC closes overlays =====
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
       closeSidebar();
@@ -256,43 +271,5 @@ quickNote?.addEventListener("input", () => {
   if (window.TwanTools) window.TwanTools.init();
   if (window.TwanAI) window.TwanAI.init();
   if (window.TwanSupabase) window.TwanSupabase.init();
-  if (window.TwanStorage) {
-  window.TwanStorage.init();
-}
-// ==== SETTINGS MODAL (OPEN / CLOSE) ====
-const settingsModal = document.getElementById("settings-modal");
-const btnOpenSettings = document.getElementById("btn-open-settings");
-const btnCloseSettings = document.getElementById("btn-settings-close");
-
-btnOpenSettings?.addEventListener("click", () => {
-  settingsModal?.classList.add("is-open");
-});
-
-btnCloseSettings?.addEventListener("click", () => {
-  settingsModal?.classList.remove("is-open");
-});
-
-// click nền mờ để đóng
-settingsModal
-  ?.querySelector("[data-close-settings]")
-  ?.addEventListener("click", () => {
-    settingsModal.classList.remove("is-open");
-  });
-
+  if (window.TwanStorage) window.TwanStorage.init();
 })();
-// ==== SETTINGS MODAL (OPEN / CLOSE) ====
-const settingsModal = document.getElementById("settings-modal");
-const btnOpenSettings = document.getElementById("btn-open-settings");
-const btnCloseSettings = document.getElementById("btn-settings-close");
-
-btnOpenSettings?.addEventListener("click", () => {
-  settingsModal?.classList.add("is-open");
-});
-
-btnCloseSettings?.addEventListener("click", () => {
-  settingsModal?.classList.remove("is-open");
-});
-
-settingsModal?.querySelector("[data-close-settings]")?.addEventListener("click", () => {
-  settingsModal.classList.remove("is-open");
-});
