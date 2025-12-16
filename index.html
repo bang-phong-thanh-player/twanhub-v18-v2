@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <title>TwanHub SIGNATURE V2</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#eef2ff" />
 
   <!-- CSS -->
   <link rel="stylesheet" href="css/style.css" />
@@ -12,478 +11,340 @@
   <!-- Math.js cho máy tính khoa học -->
   <script src="https://cdn.jsdelivr.net/npm/mathjs@11.11.0/lib/browser/math.js"></script>
 </head>
+
 <body>
   <div id="twan-root" class="twan-root" data-theme="light">
+
     <!-- HEADER -->
     <header class="twan-header">
-      <button class="icon-button" id="btn-open-sidebar" aria-label="Open menu">☰</button>
+      <button class="icon-button" id="btn-open-sidebar">☰</button>
 
-      <div class="twan-logo" role="banner">
+      <div class="twan-logo">
         <span class="logo-text">TwanHub</span>
         <span class="logo-badge">SIGNATURE V2</span>
       </div>
 
       <div class="twan-header-right">
-        <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">
+        <!-- Giữ Light/Dark như hiện tại -->
+        <button class="theme-toggle" id="theme-toggle">
           <span class="theme-icon">🌞</span>
           <span class="theme-label">Light</span>
         </button>
 
-        <!-- SETTINGS -->
-        <button class="icon-button" id="btn-open-settings" aria-label="Open settings">⚙️</button>
+        <!-- Settings button (bấm mở popup Settings) -->
+        <button class="icon-button" id="btn-open-settings" title="Settings">⚙️</button>
+
+        <!-- Avatar (chỉ để nhìn cho đẹp, không cần dùng) -->
+        <div class="avatar-badge" title="Twan">T</div>
       </div>
     </header>
 
-    <!-- SETTINGS MODAL -->
-    <div class="modal" id="settings-modal" aria-hidden="true">
-      <div class="modal-backdrop" id="settings-backdrop"></div>
-      <div class="modal-card" role="dialog" aria-modal="true" aria-label="Settings">
-        <div class="modal-head">
-          <div class="modal-title">⚙️ Cài đặt</div>
-          <button class="icon-button" id="btn-close-settings" aria-label="Close settings">✕</button>
-        </div>
-
-        <div class="settings-list">
-          <div class="setting-row">
-            <div>
-              <div class="setting-name">Âm thanh</div>
-              <div class="setting-desc">Timer hết giờ sẽ “ting”, bấm nút có click nhẹ.</div>
-            </div>
-            <label class="switch">
-              <input type="checkbox" id="toggle-sound" />
-              <span class="slider"></span>
-            </label>
-          </div>
-
-          <div class="setting-row">
-            <div>
-              <div class="setting-name">Giảm chuyển động</div>
-              <div class="setting-desc">Tắt animation nếu muốn mượt/đỡ chóng mặt.</div>
-            </div>
-            <label class="switch">
-              <input type="checkbox" id="toggle-reduce-motion" />
-              <span class="slider"></span>
-            </label>
-          </div>
-
-          <div class="setting-row setting-actions">
-            <button class="btn-ghost" id="btn-clear-notes">🧹 Xóa Notes</button>
-            <button class="btn-ghost" id="btn-clear-quick">🧹 Xóa Quick Note</button>
-            <button class="btn-ghost" id="btn-clear-recent-cities">🧹 Xóa Recent Cities</button>
-          </div>
-
-          <p class="tool-note">
-            Tip: bấm <code>ESC</code> để đóng settings.
-          </p>
-        </div>
-      </div>
-    </div>
-
-    <!-- SIDEBAR OVERLAY -->
-    <aside class="twan-sidebar" id="twan-sidebar" aria-hidden="true">
-      <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
-
-      <div class="sidebar-inner" role="dialog" aria-modal="true" aria-label="Sidebar menu">
+    <!-- SIDEBAR -->
+    <aside class="twan-sidebar" id="twan-sidebar">
+      <div class="sidebar-inner">
         <div class="sidebar-header">
           <span class="sidebar-title">Menu</span>
-          <button class="icon-button" id="btn-close-sidebar" aria-label="Close menu">✕</button>
+          <button class="icon-button" id="btn-close-sidebar">✕</button>
         </div>
-
         <nav class="sidebar-nav">
           <button class="sidebar-link" data-section-target="home-section">🏠 Home</button>
           <button class="sidebar-link" data-section-target="chat-section">💬 Chat</button>
           <button class="sidebar-link" data-section-target="notes-section">🗂 Notes</button>
           <button class="sidebar-link" data-section-target="tools-section">🧰 Công cụ</button>
         </nav>
-
-        <div class="sidebar-footer">
-          <div class="sidebar-foot-note">Tip: bấm <b>ESC</b> để đóng menu.</div>
-        </div>
       </div>
     </aside>
 
     <!-- MAIN CONTENT -->
-    <main class="twan-main" id="main">
-      <div class="container">
-        <!-- HOME -->
-        <section id="home-section" class="twan-section is-active">
-          <div class="section-card">
-            <h1 class="section-title">⛅ Chào Tú</h1>
-            <p class="section-subtitle">Welcome back to TwanHub.</p>
+    <main class="twan-main">
 
-            <div class="info-card">
-              <h2 class="info-title">✨ Quick note Twan Flow</h2>
-              <textarea
-                id="quick-note"
-                class="text-area"
-                placeholder="Nghĩ gì thì quăng vào đây trước, lát nữa sắp xếp sau..."
-              ></textarea>
-              <div class="info-footer">
-                <span class="info-tag">🪐 Universe</span>
-                <span class="info-tag">🧠 Idea</span>
-                <span class="info-tag">📦 Resource</span>
-                <span class="info-tag">💬 Chat</span>
-              </div>
+      <!-- HOME -->
+      <section id="home-section" class="twan-section is-active">
+        <div class="section-card">
+          <h1 class="section-title">⛅ Chào Tú</h1>
+          <p class="section-subtitle">Welcome back to TwanHub.</p>
+
+          <div class="info-card">
+            <h2 class="info-title">✨ Quick note Twan Flow</h2>
+            <textarea
+              id="quick-note"
+              class="text-area"
+              placeholder="Nghĩ gì thì quăng vào đây trước, lát nữa sắp xếp sau..."
+            ></textarea>
+            <div class="info-footer">
+              <span class="info-tag">🪐 Universe</span>
+              <span class="info-tag">🧠 Idea</span>
+              <span class="info-tag">📦 Resource</span>
+              <span class="info-tag">💬 Chat</span>
+            </div>
+          </div>
+
+          <div class="info-card">
+            <h2 class="info-title">📍 Nhịp độ Twan Signature</h2>
+            <ul class="bullet-list">
+              <li>1 việc quan trọng nhất</li>
+              <li>1 ý tưởng cần ghi lại</li>
+              <li>1 tài nguyên cần gom vào kho</li>
+            </ul>
+            <p class="info-note">
+              TwanHub V2 (Supabase + Cloud) đang dần hoàn thiện. Sau khi ổn định, mình gắn GPT thật + build APK.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- CHAT / TwanGPT mini -->
+      <section id="chat-section" class="twan-section">
+        <div class="section-card">
+          <h1 class="section-title">💬 TwanGPT (Mini AI)</h1>
+          <p class="section-subtitle">
+            Phiên bản giả lập chạy local – sau này gắn GPT thật.
+          </p>
+
+          <div class="ai-chat-box">
+            <div id="ai-chat-log" class="ai-chat-log"></div>
+            <form id="ai-chat-form" class="ai-chat-form">
+              <input
+                id="ai-input"
+                class="ai-input"
+                type="text"
+                autocomplete="off"
+                placeholder="Nhập để chat với AI (mini)..."
+              />
+              <button class="btn-primary" type="submit">Gửi</button>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <!-- NOTES -->
+      <section id="notes-section" class="twan-section">
+        <div class="section-card">
+          <h1 class="section-title">📝 Ghi chú nhanh</h1>
+          <textarea
+            id="notes-area"
+            class="text-area text-area-large"
+            placeholder="Viết gì đó vào đây..."
+          ></textarea>
+          <p class="info-note">
+            Sau này mình sync ghi chú này lên Supabase luôn.
+          </p>
+        </div>
+      </section>
+
+      <!-- TOOLS -->
+      <section id="tools-section" class="twan-section">
+        <div class="section-card">
+          <h1 class="section-title">🧰 Công cụ</h1>
+          <p class="section-subtitle">
+            Thời gian, thời tiết, timer, máy tính, dịch, file cloud...
+          </p>
+
+          <!-- Tool tabs -->
+          <div class="tool-tabs">
+            <button class="tool-tab is-active" data-tool-tab="time-weather">⏰ Thời gian & Thời tiết</button>
+            <button class="tool-tab" data-tool-tab="timer-stopwatch">⏱ Timer & Stopwatch</button>
+            <button class="tool-tab" data-tool-tab="calculator">🧮 Máy tính onl</button>
+            <button class="tool-tab" data-tool-tab="translator">🌐 Twan Dịch</button>
+            <button class="tool-tab" data-tool-tab="cloud-files">📁 File Cloud</button>
+          </div>
+
+          <!-- TIME & WEATHER -->
+          <div class="tool-panel is-active" data-tool-panel="time-weather">
+            <div class="tool-card">
+              <h2 class="tool-title">📍 Vị trí / thành phố</h2>
+              <form id="city-form" class="inline-form">
+                <input
+                  id="city-input"
+                  class="text-input flex-1"
+                  type="text"
+                  placeholder="Nhập tên thành phố (vd: Seoul, Tokyo, Paris...)"
+                />
+                <button class="btn-secondary" type="submit">Cập nhật vị trí</button>
+              </form>
+              <p class="tool-hint">
+                Mẹo: Gõ tiếng Anh thường chính xác hơn. Sau này mình có thể lưu lại thành phố hay dùng.
+              </p>
             </div>
 
-            <div class="info-card">
-              <h2 class="info-title">📍 Nhịp độ Twan Signature</h2>
-              <ul class="bullet-list">
-                <li>1 việc quan trọng nhất</li>
-                <li>1 ý tưởng cần ghi lại</li>
-                <li>1 tài nguyên cần gom vào kho</li>
-              </ul>
-              <p class="info-note">
-                TwanHub V2 đang dần hoàn thiện. Xong khung → tools xịn → rồi mới gắn cloud/AI.
+            <div class="tool-grid">
+              <div class="tool-card">
+                <h3 class="tool-subtitle">⏳ Thời gian hiện tại</h3>
+                <p id="time-city-label" class="tool-label">—</p>
+                <p id="time-current" class="time-display">--:--:--</p>
+                <p id="time-date" class="tool-note">—</p>
+              </div>
+
+              <div class="tool-card">
+                <h3 class="tool-subtitle">🌡 Thời tiết</h3>
+                <p id="weather-summary" class="tool-label">Chưa có dữ liệu.</p>
+                <div class="weather-row">
+                  <div>
+                    <div class="weather-label">Nhiệt độ</div>
+                    <div id="weather-temp" class="weather-value">—</div>
+                  </div>
+                  <div>
+                    <div class="weather-label">Độ ẩm</div>
+                    <div id="weather-humidity" class="weather-value">—</div>
+                  </div>
+                </div>
+                <div class="weather-row">
+                  <div>
+                    <div class="weather-label">Gió</div>
+                    <div id="weather-wind" class="weather-value">—</div>
+                  </div>
+                  <div>
+                    <div class="weather-label">UV</div>
+                    <div id="weather-uv" class="weather-value">—</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="tool-card span-2">
+                <h3 class="tool-subtitle">🌅 Mặt trời mọc & lặn</h3>
+                <div class="sun-row">
+                  <div>
+                    <div class="weather-label">Mặt trời mọc</div>
+                    <div id="sunrise" class="weather-value">—</div>
+                  </div>
+                  <div>
+                    <div class="weather-label">Mặt trời lặn</div>
+                    <div id="sunset" class="weather-value">—</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TIMER & STOPWATCH -->
+          <div class="tool-panel" data-tool-panel="timer-stopwatch">
+            <div class="tool-grid">
+              <div class="tool-card">
+                <h2 class="tool-title">⏳ Đếm ngược (Timer)</h2>
+                <div class="timer-inputs">
+                  <label>Giờ
+                    <input id="timer-hours" class="number-input" type="number" min="0" value="0" />
+                  </label>
+                  <label>Phút
+                    <input id="timer-minutes" class="number-input" type="number" min="0" value="0" />
+                  </label>
+                  <label>Giây
+                    <input id="timer-seconds" class="number-input" type="number" min="0" value="0" />
+                  </label>
+                </div>
+                <div id="timer-display" class="time-display">00:00:00</div>
+                <div class="button-row">
+                  <button id="btn-timer-start" class="btn-primary">Bắt đầu</button>
+                  <button id="btn-timer-pause" class="btn-secondary">Tạm dừng</button>
+                  <button id="btn-timer-reset" class="btn-ghost">Reset</button>
+                </div>
+              </div>
+
+              <div class="tool-card">
+                <h2 class="tool-title">🏃 Stopwatch (Bấm giờ)</h2>
+                <div id="stopwatch-display" class="time-display">00:00.0</div>
+                <div class="button-row">
+                  <button id="btn-sw-start" class="btn-primary">Start</button>
+                  <button id="btn-sw-pause" class="btn-secondary">Pause</button>
+                  <button id="btn-sw-reset" class="btn-ghost">Reset</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- CALCULATOR -->
+          <div class="tool-panel" data-tool-panel="calculator">
+            <div class="tool-card">
+              <h2 class="tool-title">🧮 Máy tính khoa học (math.js)</h2>
+              <label class="field-label" for="calc-expression">Biểu thức</label>
+              <input
+                id="calc-expression"
+                class="text-input"
+                type="text"
+                placeholder="Ví dụ: (2+3)*4, sin(30 deg), sqrt(9)..."
+              />
+              <div class="button-row">
+                <button id="btn-calc-eval" class="btn-primary">Tính</button>
+                <button id="btn-calc-clear" class="btn-ghost">Xóa</button>
+              </div>
+              <div class="tool-result">
+                <div class="result-label">Kết quả:</div>
+                <div id="calc-result" class="result-value">—</div>
+              </div>
+              <p class="tool-note">
+                Dùng cú pháp của <code>math.js</code>.
               </p>
             </div>
           </div>
-        </section>
 
-        <!-- CHAT / TwanGPT mini -->
-        <section id="chat-section" class="twan-section">
-          <div class="section-card">
-            <h1 class="section-title">💬 TwanGPT (Mini AI)</h1>
-            <p class="section-subtitle">
-              Phiên bản giả lập chạy local – sau này gắn GPT thật.
-            </p>
-
-            <div class="ai-chat-box">
-              <div id="ai-chat-log" class="ai-chat-log"></div>
-              <form id="ai-chat-form" class="ai-chat-form">
-                <input
-                  id="ai-input"
-                  class="ai-input"
-                  type="text"
-                  autocomplete="off"
-                  placeholder="Nhập để chat với AI (mini)..."
-                />
-                <button class="btn-primary" type="submit">Gửi</button>
-              </form>
+          <!-- TRANSLATOR -->
+          <div class="tool-panel" data-tool-panel="translator">
+            <div class="tool-card">
+              <h2 class="tool-title">🌐 Twan Dịch (demo)</h2>
+              <div class="translator-row">
+                <div class="translator-col">
+                  <label class="field-label" for="trans-source">Văn bản gốc</label>
+                  <textarea
+                    id="trans-source"
+                    class="text-area"
+                    placeholder="Nhập câu cần dịch..."
+                  ></textarea>
+                </div>
+                <div class="translator-col">
+                  <label class="field-label" for="trans-result">Kết quả</label>
+                  <textarea
+                    id="trans-result"
+                    class="text-area"
+                    placeholder="Kết quả sẽ hiện ở đây."
+                    readonly
+                  ></textarea>
+                </div>
+              </div>
+              <div class="translator-controls">
+                <select id="trans-from" class="select-input">
+                  <option value="vi">Tiếng Việt</option>
+                  <option value="en">Tiếng Anh</option>
+                </select>
+                <span>→</span>
+                <select id="trans-to" class="select-input">
+                  <option value="en">Tiếng Anh</option>
+                  <option value="vi">Tiếng Việt</option>
+                </select>
+                <button id="btn-translate" class="btn-primary">Dịch</button>
+              </div>
+              <p class="tool-note">
+                Demo translate. Sau này gắn GPT/Google nâng cấp.
+              </p>
             </div>
           </div>
-        </section>
 
-        <!-- NOTES -->
-        <section id="notes-section" class="twan-section">
-          <div class="section-card">
-            <h1 class="section-title">📝 Ghi chú nhanh</h1>
-            <textarea
-              id="notes-area"
-              class="text-area text-area-large"
-              placeholder="Viết gì đó vào đây..."
-            ></textarea>
-            <p class="info-note">
-              Sau này mình có thể sync ghi chú này lên Supabase luôn.
-            </p>
-          </div>
-        </section>
+          <!-- CLOUD FILES -->
+          <div class="tool-panel" data-tool-panel="cloud-files">
+            <div class="tool-card">
+              <h2 class="tool-title">📁 TwanHub Cloud Files</h2>
+              <p class="tool-note">
+                Upload file lên Supabase Storage (chỉ user của đệ thấy).
+              </p>
 
-        <!-- TOOLS -->
-        <section id="tools-section" class="twan-section">
-          <div class="section-card">
-            <h1 class="section-title">🧰 Công cụ</h1>
-            <p class="section-subtitle">
-              Thời gian, thời tiết, timer, máy tính, dịch...
-            </p>
-
-            <!-- Tool tabs -->
-            <div class="tool-tabs">
-              <button class="tool-tab is-active" data-tool-tab="time-weather">
-                ⏰ Time & Weather
-              </button>
-              <button class="tool-tab" data-tool-tab="timer-stopwatch">
-                ⏱ Timer & Stopwatch
-              </button>
-              <button class="tool-tab" data-tool-tab="calculator">
-                🧮 Calculator PRO
-              </button>
-              <button class="tool-tab" data-tool-tab="translator">
-                <button class="tool-tab" data-tool-tab="cloud-files">📁 File Cloud</button>
-                🌐 Twan Dịch PRO
-              </button>
-            </div>
-
-            <!-- TIME & WEATHER (weather.js đang handle) -->
-            <div class="tool-panel is-active" data-tool-panel="time-weather">
-              <div class="tool-card">
-                <h2 class="tool-title">📍 Vị trí / thành phố</h2>
-                <form id="city-form" class="inline-form">
-                  <input
-                    id="city-input"
-                    class="text-input flex-1"
-                    type="text"
-                    placeholder="Nhập tên thành phố (vd: Busan, Seoul, Tokyo...)"
-                  />
-                  <button class="btn-secondary" type="submit">Cập nhật vị trí</button>
-                  <div class="chips-row" id="recent-cities"></div>
-                </form>
-                <p class="tool-hint">
-                  Gõ tiếng Anh thường chính xác hơn. Recent city sẽ hiện ngay dưới.
-                </p>
+              <div class="button-row">
+                <input id="file-picker" class="text-input" type="file" />
+                <button id="btn-upload" class="btn-primary">Upload</button>
+                <button id="btn-refresh-files" class="btn-ghost">Refresh</button>
               </div>
-              <!-- CLOUD FILES -->
-<div class="tool-panel" data-tool-panel="cloud-files">
-  <div class="tool-card">
-    <h2 class="tool-title">📁 TwanHub Cloud Files</h2>
-    <p class="tool-note">Upload file lên Supabase Storage (chỉ user của đệ thấy). Folder sẽ là <code>user_id/</code>.</p>
 
-    <div class="button-row">
-      <input id="file-picker" class="text-input" type="file" />
-      <button id="btn-upload" class="btn-primary">Upload</button>
-      <button id="btn-refresh-files" class="btn-ghost">Refresh</button>
-    </div>
-
-    <div class="tool-result" style="margin-top:10px;">
-      <div class="result-label">Danh sách file:</div>
-      <div id="files-list" style="margin-top:6px;"></div>
-    </div>
-  </div>
-</div>
-
-              <div class="tool-grid">
-                <div class="tool-card">
-                  <h3 class="tool-subtitle">⏳ Thời gian hiện tại</h3>
-                  <p id="time-city-label" class="tool-label">—</p>
-                  <p id="time-current" class="time-display">--:--:--</p>
-                  <p id="time-date" class="tool-note">—</p>
-                </div>
-
-                <div class="tool-card">
-                  <h3 class="tool-subtitle">🌡 Thời tiết</h3>
-                  <div class="tool-card">
-  <h3 class="tool-subtitle">🌬 Chất lượng không khí (AQI)</h3>
-
-  <div class="aqi-top">
-    <div>
-      <div class="weather-label">Tình trạng</div>
-      <div id="aqi-badge" class="aqi-badge">—</div>
-    </div>
-
-    <div class="aqi-big">
-      <div class="aqi-label">US AQI</div>
-      <div id="aqi-value" class="aqi-value">—</div>
-    </div>
-  </div>
-
-  <div class="weather-row">
-    <div>
-      <div class="weather-label">PM2.5</div>
-      <div id="aqi-pm25" class="weather-value">—</div>
-    </div>
-    <div>
-      <div class="weather-label">PM10</div>
-      <div id="aqi-pm10" class="weather-value">—</div>
-    </div>
-  </div>
-
-  <div class="weather-row">
-    <div>
-      <div class="weather-label">O₃</div>
-      <div id="aqi-o3" class="weather-value">—</div>
-    </div>
-    <div>
-      <div class="weather-label">NO₂</div>
-      <div id="aqi-no2" class="weather-value">—</div>
-    </div>
-  </div>
-
-  <p id="aqi-note" class="tool-note">Nhập thành phố để lấy AQI.</p>
-</div>
-                  <p id="weather-summary" class="tool-label">Chưa có dữ liệu.</p>
-                  <div class="weather-row">
-                    <div>
-                      <div class="weather-label">Nhiệt độ</div>
-                      <div id="weather-temp" class="weather-value">—</div>
-                    </div>
-                    <div>
-                      <div class="weather-label">Độ ẩm</div>
-                      <div id="weather-humidity" class="weather-value">—</div>
-                    </div>
-                  </div>
-                  <div class="weather-row">
-                    <div>
-                      <div class="weather-label">Gió</div>
-                      <div id="weather-wind" class="weather-value">—</div>
-                    </div>
-                    <div>
-                      <div class="weather-label">UV</div>
-                      <div id="weather-uv" class="weather-value">—</div>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="tool-card span-2">
-                  <h3 class="tool-subtitle">🌅 Mặt trời mọc & lặn</h3>
-                  <div class="sun-row">
-                    <div>
-                      <div class="weather-label">Mặt trời mọc</div>
-                      <div id="sunrise" class="weather-value">—</div>
-                    </div>
-                    <div>
-                      <div class="weather-label">Mặt trời lặn</div>
-                      <div id="sunset" class="weather-value">—</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- TIMER & STOPWATCH PRO -->
-            <div class="tool-panel" data-tool-panel="timer-stopwatch">
-              <div class="tool-grid">
-                <div class="tool-card">
-                  <h2 class="tool-title">⏳ Đếm ngược (Timer PRO)</h2>
-
-                  <div class="timer-inputs timer-inputs-pro">
-                    <label>Giờ
-                      <input id="timer-hours" class="number-input" type="number" min="0" value="0" />
-                    </label>
-                    <label>Phút
-                      <input id="timer-minutes" class="number-input" type="number" min="0" value="0" />
-                    </label>
-                    <label>Giây
-                      <input id="timer-seconds" class="number-input" type="number" min="0" value="0" />
-                    </label>
-                    <label>Ms
-                      <input id="timer-ms" class="number-input" type="number" min="0" max="999" value="0" />
-                    </label>
-                  </div>
-
-                  <div id="timer-display" class="time-display time-display-pro">00:00:00.000</div>
-                  <div class="button-row">
-                    <button id="btn-timer-start" class="btn-primary">Bắt đầu</button>
-                    <button id="btn-timer-pause" class="btn-secondary">Tạm dừng</button>
-                    <button id="btn-timer-reset" class="btn-ghost">Reset</button>
-                  </div>
-
-                  <p id="timer-hint" class="tool-note">Hết giờ sẽ “ting” nếu bật Âm thanh.</p>
-                </div>
-
-                <div class="tool-card">
-                  <h2 class="tool-title">🏃 Stopwatch PRO</h2>
-
-                  <div id="stopwatch-display" class="time-display time-display-pro">00:00:00.000</div>
-
-                  <div class="button-row">
-                    <button id="btn-sw-start" class="btn-primary">Start</button>
-                    <button id="btn-sw-lap" class="btn-secondary">Lap</button>
-                    <button id="btn-sw-pause" class="btn-secondary">Pause</button>
-                    <button id="btn-sw-reset" class="btn-ghost">Reset</button>
-                  </div>
-
-                  <div class="laps-wrap">
-                    <div class="laps-head">
-                      <div class="laps-title">Lap</div>
-                      <button class="btn-ghost btn-mini" id="btn-sw-clear-laps">Clear</button>
-                    </div>
-                    <div id="laps-list" class="laps-list"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- CALCULATOR PRO -->
-            <div class="tool-panel" data-tool-panel="calculator">
-              <div class="tool-grid">
-                <div class="tool-card span-2">
-                  <h2 class="tool-title">🧮 Calculator PRO (math.js)</h2>
-
-                  <div class="calc-top">
-                    <input
-                      id="calc-expression"
-                      class="text-input calc-input"
-                      type="text"
-                      placeholder="Nhập biểu thức... (vd: (2+3)*4, sqrt(9), sin(30 deg))"
-                    />
-                    <button id="btn-calc-eval" class="btn-primary">=</button>
-                    <button id="btn-calc-clear" class="btn-ghost">C</button>
-                  </div>
-
-                  <div class="calc-grid" id="calc-grid">
-                    <!-- JS sẽ render keypad -->
-                  </div>
-
-                  <div class="calc-history">
-                    <div class="laps-head">
-                      <div class="laps-title">History</div>
-                      <button class="btn-ghost btn-mini" id="btn-calc-clear-history">Clear</button>
-                    </div>
-                    <div id="calc-history-list" class="history-list"></div>
-                  </div>
-
-                  <div class="tool-result">
-                    <div class="result-label">Kết quả:</div>
-                    <div id="calc-result" class="result-value">—</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- TRANSLATOR PRO -->
-            <div class="tool-panel" data-tool-panel="translator">
-              <div class="tool-card">
-                <h2 class="tool-title">🌐 Twan Dịch PRO (free)</h2>
-
-                <div class="translator-controls translator-controls-pro">
-                  <select id="trans-from" class="select-input">
-                    <option value="vi">Tiếng Việt</option>
-                    <option value="en">Tiếng Anh</option>
-                    <option value="ko">Tiếng Hàn</option>
-                    <option value="ja">Tiếng Nhật</option>
-                  </select>
-
-                  <button id="btn-trans-swap" class="btn-ghost btn-mini" type="button">⇄</button>
-
-                  <select id="trans-to" class="select-input">
-                    <option value="en">Tiếng Anh</option>
-                    <option value="vi">Tiếng Việt</option>
-                    <option value="ko">Tiếng Hàn</option>
-                    <option value="ja">Tiếng Nhật</option>
-                  </select>
-
-                  <button id="btn-translate" class="btn-primary" type="button">Dịch</button>
-                </div>
-
-                <div class="translator-row">
-                  <div class="translator-col">
-                    <div class="mini-row">
-                      <label class="field-label" for="trans-source">Văn bản gốc</label>
-                      <button class="btn-ghost btn-mini" id="btn-copy-source" type="button">Copy</button>
-                    </div>
-                    <textarea
-                      id="trans-source"
-                      class="text-area"
-                      placeholder="Nhập câu cần dịch..."
-                    ></textarea>
-                  </div>
-
-                  <div class="translator-col">
-                    <div class="mini-row">
-                      <label class="field-label" for="trans-result">Kết quả</label>
-                      <button class="btn-ghost btn-mini" id="btn-copy-result" type="button">Copy</button>
-                    </div>
-                    <textarea
-                      id="trans-result"
-                      class="text-area"
-                      placeholder="Kết quả sẽ hiện ở đây."
-                      readonly
-                    ></textarea>
-                  </div>
-                </div>
-
-                <p class="tool-note" id="translate-hint">
-                  Dùng API free (MyMemory). Nếu lỗi do net/giới hạn, bấm lại.
-                </p>
+              <div class="tool-result" style="margin-top:10px;">
+                <div class="result-label">Danh sách file:</div>
+                <div id="files-list" style="margin-top:6px;"></div>
               </div>
             </div>
           </div>
-        </section>
-      </div>
+
+        </div>
+      </section>
     </main>
 
     <!-- BOTTOM NAV -->
-    <nav class="bottom-nav" aria-label="Bottom navigation">
+    <nav class="bottom-nav">
       <button class="bottom-nav-btn is-active" data-section-target="home-section">
         <span class="bottom-icon">🏠</span>
         <span class="bottom-label">Home</span>
@@ -502,12 +363,44 @@
       </button>
     </nav>
 
-    <!-- toast -->
-    <div id="toast" class="toast" aria-live="polite"></div>
   </div>
-  
-<!-- Supabase SDK (GLOBAL, KHÔNG MODULE) -->
-<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
+  <!-- SETTINGS MODAL (ONLY ONE MODAL) -->
+  <div id="settings-modal" class="modal">
+    <div class="modal-backdrop" data-close-settings></div>
+
+    <div class="modal-card">
+      <div class="modal-head">
+        <div class="modal-title">⚙️ Settings</div>
+        <button class="icon-button" id="btn-settings-close">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <h3 style="margin:0 0 8px;">☁️ Cloud (Supabase)</h3>
+
+        <p id="cloud-status" class="tool-note">Chưa đăng nhập.</p>
+
+        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;">
+          <input
+            id="cloud-email"
+            class="text-input"
+            type="email"
+            placeholder="email của đệ..."
+            style="flex:1; min-width:220px;"
+          />
+          <button id="btn-cloud-login" class="btn-primary">Gửi link</button>
+          <button id="btn-cloud-logout" class="btn-ghost">Logout</button>
+        </div>
+
+        <p class="tool-note" style="margin-top:10px;">
+          Login bằng magic link. Không cần mật khẩu.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Supabase SDK (GLOBAL) -->
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
   <!-- JS -->
   <script src="js/ai.js"></script>
@@ -516,58 +409,5 @@
   <script src="js/supabase.js"></script>
   <script src="js/storage.js"></script>
   <script src="js/app.js"></script>
-
-
-    <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
-      <input id="auth-email" class="text-input" type="email" placeholder="email của đệ..." style="flex:1; min-width:220px;" />
-      <button id="btn-auth-login" class="btn-primary">Gửi link</button>
-      <button id="btn-auth-logout" class="btn-ghost">Logout</button>
-    </div>
-
-    <p id="auth-status" class="tool-note" style="margin-top:10px;">Chưa đăng nhập.</p>
-  </div>
-</div>
-  <!-- SETTINGS MODAL -->
-<div id="settings-modal" class="modal">
-  <div class="modal-backdrop" data-close-settings></div>
-
-  <div class="modal-card">
-    <div class="modal-head">
-      <div class="modal-title">⚙️ Settings</div>
-      <button class="icon-button" id="btn-settings-close">✕</button>
-    </div>
-
-    <div class="modal-body">
-      <h3 style="margin:0 0 8px;">☁️ Cloud (Supabase)</h3>
-
-      <p id="cloud-status" class="tool-note">Chưa đăng nhập.</p>
-
-      <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;">
-        <input
-          id="cloud-email"
-          class="text-input"
-          type="email"
-          placeholder="email của đệ..."
-          style="flex:1; min-width:220px;"
-        />
-        <button id="btn-cloud-login" class="btn-primary">Gửi link</button>
-        <button id="btn-cloud-logout" class="btn-ghost">Logout</button>
-      </div>
-
-      <p class="tool-note" style="margin-top:10px;">
-        Login bằng magic link. Không cần mật khẩu.
-      </p>
-    </div>
-  </div>
-</div>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
