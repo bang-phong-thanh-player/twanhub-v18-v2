@@ -470,3 +470,12 @@ body {
   background: var(--accent-soft);
   color: var(--accent);
 }
+/* ===== ANTI-FREEZE OVERRIDE (DÁN CUỐI FILE) ===== */
+
+/* Modal: đóng là biến mất + không chắn click */
+.modal { display: none !important; pointer-events: none !important; }
+.modal.is-open { display: block !important; pointer-events: auto !important; }
+
+/* Sidebar: đóng là biến mất + không chắn click */
+.twan-sidebar { display: none !important; pointer-events: none !important; }
+.twan-sidebar.is-open { display: block !important; pointer-events: auto !important; }
