@@ -1,40 +1,76 @@
-// js/supabase.js
-// TwanSupabase: Auth (magic link) + Notes/QuickNote sync to table public.twanhub_state
-// Requires: <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-
+// js/supabase.js (A3+ SUPERVIP)
 window.TwanSupabase = (function () {
   const SUPABASE_URL = "https://huhozlbnrztnwmabfevl.supabase.co";
   const SUPABASE_ANON_KEY = "sb_publishable_EH8VJeLy7ADMX1e43udEOA_4zGwZ1c9";
 
-  const NOTES_KEY = "twanhub_notes";
-  const QUICK_KEY = "twanhub_quick_note";
+  const LS_KEYS = {
+    notes: "twanhub_notes",
+    quick: "twanhub_quick_note",
+    theme: "twanhub_theme",
+    settings: "twanhub_settings_v1",
+    lastLocalEditAt: "twanhub_last_local_edit_at",
+    lastSyncedHash: "twanhub_last_synced_hash",
+    lastVersionAt: "twanhub_last_version_at",
+  };
 
   let client = null;
   let user = null;
   let saveTimer = null;
+  let realtimeChannel = null;
+
+  const VERSION_COOLDOWN_MS = 10_000; // 10s mới tạo version 1 lần để khỏi spam
 
   function toast(msg) {
     window.TwanToast?.show?.(msg);
     console.log("[TwanSupabase]", msg);
   }
 
+  function nowISO() {
+    return new Date().toISOString();
+  }
+
   function getLocalState() {
     return {
-      notes: localStorage.getItem(NOTES_KEY) || "",
-      quick: localStorage.getItem(QUICK_KEY) || "",
-      updatedAt: new Date().toISOString(),
+      meta: {
+        v: "A3+",
+        lastLocalEditAt: localStorage.getItem(LS_KEYS.lastLocalEditAt) || nowISO(),
+      },
+      notes: {
+        main: localStorage.getItem(LS_KEYS.notes) || "",
+        quick: localStorage.getItem(LS_KEYS.quick) || "",
+      },
+      ui: {
+        theme: localStorage.getItem(LS_KEYS.theme) || "light",
+        settingsRaw: localStorage.getItem(LS_KEYS.settings) || "",
+      },
+      // sau này đệ mở rộng resources/tools/mxh/universe thì nhét vào đây luôn
     };
   }
 
-  function setLocalState(data) {
-    if (!data) return;
-    if (typeof data.notes === "string") localStorage.setItem(NOTES_KEY, data.notes);
-    if (typeof data.quick === "string") localStorage.setItem(QUICK_KEY, data.quick);
+  function applyStateToUI(state) {
+    if (!state) return;
 
     const notesArea = document.getElementById("notes-area");
     const quickNote = document.getElementById("quick-note");
-    if (notesArea && typeof data.notes === "string") notesArea.value = data.notes;
-    if (quickNote && typeof data.quick === "string") quickNote.value = data.quick;
+
+    const notes = state?.notes?.main;
+    const quick = state?.notes?.quick;
+
+    if (notesArea && typeof notes === "string") {
+      notesArea.value = notes;
+      localStorage.setItem(LS_KEYS.notes, notes);
+    }
+    if (quickNote && typeof quick === "string") {
+      quickNote.value = quick;
+      localStorage.setItem(LS_KEYS.quick, quick);
+    }
+
+    if (state?.ui?.theme) {
+      localStorage.setItem(LS_KEYS.theme, state.ui.theme);
+    }
+    if (typeof state?.ui?.settingsRaw === "string") {
+      localStorage.setItem(LS_KEYS.settings, state.ui.settingsRaw);
+    }
   }
 
   function updateCloudStatus() {
@@ -44,65 +80,149 @@ window.TwanSupabase = (function () {
     else el.textContent = "❌ Chưa đăng nhập.";
   }
 
-  async function loadRemoteState() {
-    if (!user) return;
+  async function sha256(text) {
+    const enc = new TextEncoder().encode(text);
+    const buf = await crypto.subtle.digest("SHA-256", enc);
+    return Array.from(new Uint8Array(buf))
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+  }
+
+  function markLocalEdited() {
+    try {
+      localStorage.setItem(LS_KEYS.lastLocalEditAt, nowISO());
+    } catch (_) {}
+  }
+
+  function shouldCreateVersion(newHash) {
+    const lastHash = localStorage.getItem(LS_KEYS.lastSyncedHash) || "";
+    if (newHash === lastHash) return false;
+
+    const lastV = Number(localStorage.getItem(LS_KEYS.lastVersionAt) || "0");
+    const now = Date.now();
+    if (now - lastV < VERSION_COOLDOWN_MS) return false;
+
+    return true;
+  }
+
+  async function loadRemoteCurrent() {
+    if (!user) return null;
 
     const { data, error } = await client
       .from("twanhub_state")
-      .select("data")
+      .select("data, updated_at")
       .eq("user_id", user.id)
       .maybeSingle();
 
     if (error) {
       console.error(error);
-      toast("⚠️ Không load được cloud state");
-      return;
+      toast("⚠️ Không load được cloud CURRENT");
+      return null;
     }
-
-    if (data?.data) {
-      setLocalState(data.data);
-      toast("☁️ Đã đồng bộ từ cloud");
-    } else {
-      // chưa có row -> tạo luôn (upsert)
-      await saveNow();
-    }
+    return data || null;
   }
 
-  async function saveNow() {
+  // merge strategy: ưu tiên “edit mới hơn”
+  function mergeLocalRemote(localState, remoteState) {
+    const localAt = Date.parse(localState?.meta?.lastLocalEditAt || "1970-01-01");
+    const remoteAt = Date.parse(remoteState?.meta?.lastLocalEditAt || "1970-01-01");
+
+    // remote mới hơn -> lấy remote
+    if (remoteAt > localAt) return { merged: remoteState, source: "remote" };
+
+    // local mới hơn -> giữ local (sau đó save lên)
+    return { merged: localState, source: "local" };
+  }
+
+  async function ensureRowExists() {
     if (!user) return;
 
-    const payload = getLocalState();
+    const remote = await loadRemoteCurrent();
+    if (remote?.data) return;
+
+    const localState = getLocalState();
+    const text = JSON.stringify(localState);
+    const hash = await sha256(text);
 
     const { error } = await client
       .from("twanhub_state")
-      .upsert(
-        { user_id: user.id, data: payload, updated_at: new Date().toISOString() },
-        { onConflict: "user_id" }
-      );
+      .upsert({ user_id: user.id, data: localState, updated_at: nowISO() }, { onConflict: "user_id" });
+
+    if (!error) {
+      localStorage.setItem(LS_KEYS.lastSyncedHash, hash);
+      toast("☁️ Khởi tạo CURRENT trên cloud");
+    }
+  }
+
+  async function saveNow(forceVersion = false) {
+    if (!user) return;
+
+    const localState = getLocalState();
+    const payloadText = JSON.stringify(localState);
+    const hash = await sha256(payloadText);
+
+    // 1) upsert CURRENT
+    const { error } = await client
+      .from("twanhub_state")
+      .upsert({ user_id: user.id, data: localState, updated_at: nowISO() }, { onConflict: "user_id" });
 
     if (error) {
       console.error(error);
-      toast("⚠️ Lưu cloud thất bại");
+      toast("❌ Lưu CURRENT thất bại");
       return;
     }
 
+    // 2) create VERSION (khi hash đổi, và không spam)
+    const createV = forceVersion || shouldCreateVersion(hash);
+    if (createV) {
+      const { error: vErr } = await client
+        .from("twanhub_state_versions")
+        .insert({ user_id: user.id, hash, data: localState });
+
+      if (!vErr) {
+        localStorage.setItem(LS_KEYS.lastVersionAt, String(Date.now()));
+        toast("📌 Đã lưu VERSION");
+      } else {
+        console.error(vErr);
+      }
+    }
+
+    localStorage.setItem(LS_KEYS.lastSyncedHash, hash);
     toast("✅ Đã lưu cloud");
   }
 
   function scheduleSave() {
-    if (!user) return; // chưa login thì không sync cloud
+    if (!user) return;
     clearTimeout(saveTimer);
-    saveTimer = setTimeout(() => {
-      saveNow();
-    }, 600);
+    saveTimer = setTimeout(() => saveNow(false), 650);
+  }
+
+  async function loadAndSync() {
+    if (!user) return;
+
+    await ensureRowExists();
+
+    const remote = await loadRemoteCurrent();
+    const remoteState = remote?.data || null;
+
+    const localState = getLocalState();
+    const { merged, source } = mergeLocalRemote(localState, remoteState || localState);
+
+    applyStateToUI(merged);
+
+    if (source === "local") {
+      // local mới hơn -> đẩy lên cloud
+      await saveNow(false);
+      toast("🔁 Local mới hơn → đã sync lên cloud");
+    } else {
+      toast("⬇️ Cloud mới hơn → đã sync xuống");
+    }
   }
 
   async function sendMagicLink(email) {
     const { error } = await client.auth.signInWithOtp({
       email,
-      options: {
-        emailRedirectTo: window.location.href, // giữ lại ngay trang này
-      },
+      options: { emailRedirectTo: window.location.href },
     });
 
     if (error) {
@@ -110,11 +230,13 @@ window.TwanSupabase = (function () {
       toast("❌ Gửi link lỗi");
       return;
     }
-
     toast("📩 Đã gửi magic link. Mở mail để đăng nhập!");
   }
 
   async function logout() {
+    try { realtimeChannel?.unsubscribe?.(); } catch (_) {}
+    realtimeChannel = null;
+
     await client.auth.signOut();
     user = null;
     updateCloudStatus();
@@ -122,7 +244,6 @@ window.TwanSupabase = (function () {
   }
 
   function wireUI() {
-    // Settings modal buttons
     const btnLogin = document.getElementById("btn-cloud-login");
     const btnLogout = document.getElementById("btn-cloud-logout");
     const emailInput = document.getElementById("cloud-email");
@@ -134,23 +255,51 @@ window.TwanSupabase = (function () {
     });
 
     btnLogout?.addEventListener("click", logout);
+
+    // mark local edits (so merge works)
+    const notesArea = document.getElementById("notes-area");
+    const quickNote = document.getElementById("quick-note");
+
+    notesArea?.addEventListener("input", () => markLocalEdited());
+    quickNote?.addEventListener("input", () => markLocalEdited());
+  }
+
+  function setupRealtime() {
+    if (!user) return;
+
+    // nghe thay đổi CURRENT của chính user (mở 2 máy sẽ sync)
+    realtimeChannel?.unsubscribe?.();
+    realtimeChannel = client
+      .channel("twanhub_state_realtime")
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "twanhub_state",
+          filter: `user_id=eq.${user.id}`,
+        },
+        async () => {
+          // có update từ nơi khác -> kéo xuống
+          const remote = await loadRemoteCurrent();
+          if (remote?.data) {
+            applyStateToUI(remote.data);
+            toast("🔄 Realtime: đã cập nhật từ cloud");
+          }
+        }
+      )
+      .subscribe();
   }
 
   async function init() {
-    // 1) init client
     if (!window.supabase?.createClient) {
-      console.error("Supabase SDK chưa load. Kiểm tra script @supabase/supabase-js@2");
+      console.error("Supabase SDK chưa load (@supabase/supabase-js@2).");
       return;
     }
     client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // 2) restore local notes into UI (offline-first)
-    setLocalState(getLocalState());
-
-    // 3) ui
     wireUI();
 
-    // 4) auth state
     const { data: { session } } = await client.auth.getSession();
     user = session?.user || null;
     updateCloudStatus();
@@ -161,19 +310,20 @@ window.TwanSupabase = (function () {
 
       if (user) {
         toast("✅ Login thành công");
-        await loadRemoteState();
+        await loadAndSync();
+        setupRealtime();
       } else {
-        toast("ℹ️ Chưa login");
+        toast("ℹ️ Chưa login (đang chạy local)");
       }
     });
 
-    // 5) nếu đã login sẵn -> load
     if (user) {
-      await loadRemoteState();
+      await loadAndSync();
+      setupRealtime();
     } else {
       toast("ℹ️ Notes đang chạy local (chưa sync cloud)");
     }
   }
 
-  return { init, scheduleSave, saveNow, loadRemoteState };
+  return { init, scheduleSave, saveNow, loadAndSync };
 })();
