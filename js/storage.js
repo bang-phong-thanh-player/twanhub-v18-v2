@@ -1,104 +1,109 @@
 // js/storage.js
-// Upload + list files in Supabase Storage bucket 'twanhub-files'
-// Rule: path must be `${userId}/${filename}`
-
 window.TwanStorage = (function () {
-  const BUCKET = "twanhub-files";
+  let client = null;
+  let user = null;
 
-  function toast(msg) {
-    window.TwanToast?.show?.(msg);
-    console.log("[TwanStorage]", msg);
+  const fileInput = document.getElementById("file-picker");
+  const btnUpload = document.getElementById("btn-upload");
+  const btnRefresh = document.getElementById("btn-refresh-files");
+  const filesList = document.getElementById("files-list");
+
+  async function init() {
+    if (!window.supabase) return;
+
+    client = window.supabaseClient || null;
+    if (!client && window.TwanSupabase?.getClient) {
+      client = window.TwanSupabase.getClient();
+    }
+
+    const { data } = await supabase.auth.getUser();
+    user = data.user;
+
+    if (!user) return;
+
+    btnUpload?.addEventListener("click", uploadFile);
+    btnRefresh?.addEventListener("click", loadFiles);
+
+    loadFiles();
   }
 
-  function getClient() {
-    // TwanSupabase tạo client nội bộ, nên mình lấy lại qua window.supabase + key/url là khó
-    // Cách dễ: dùng client từ TwanSupabase bằng việc expose -> nhưng hiện chưa expose.
-    // => giải pháp gọn: tạo lại client từ global config đã hardcode trong supabase.js (same anon).
-    const url = "https://huhozlbnrztnwmabfevl.supabase.co";
-    const key = "sb_publishable_EH8VJeLy7ADMX1e43udEOA_4zGwZ1c9";
-    return window.supabase.createClient(url, key);
-  }
+  async function uploadFile() {
+    if (!user || !fileInput?.files?.length) return;
 
-  async function getUser(client) {
-    const { data: { session } } = await client.auth.getSession();
-    return session?.user || null;
-  }
+    const file = fileInput.files[0];
+    const path = `${user.id}/${Date.now()}_${file.name}`;
 
-  function renderFiles(items) {
-    const list = document.getElementById("files-list");
-    if (!list) return;
-    if (!items?.length) {
-      list.innerHTML = `<div style="color:var(--text-sub); font-size:13px;">(Chưa có file)</div>`;
+    const { error } = await supabase
+      .storage
+      .from("twanhub-files")
+      .upload(path, file);
+
+    if (error) {
+      alert("Upload lỗi");
+      console.error(error);
       return;
     }
 
-    list.innerHTML = items
-      .map((it) => {
-        const name = it.name;
-        return `
-          <div style="display:flex; justify-content:space-between; gap:10px; padding:6px 0; border-bottom:1px solid rgba(148,163,184,.25);">
-            <div style="font-size:13px; word-break:break-all;">${name}</div>
-          </div>
-        `;
-      })
-      .join("");
+    fileInput.value = "";
+    loadFiles();
   }
 
-  async function refreshList() {
-    const client = getClient();
-    const user = await getUser(client);
-    if (!user) return toast("⚠️ Login trước đã");
+  async function loadFiles() {
+    if (!user || !filesList) return;
 
-    const { data, error } = await client.storage.from(BUCKET).list(user.id, {
-      limit: 100,
-      offset: 0,
-      sortBy: { column: "name", order: "asc" },
-    });
+    const { data, error } = await supabase
+      .storage
+      .from("twanhub-files")
+      .list(user.id, { limit: 100, sortBy: { column: "created_at", order: "desc" } });
 
     if (error) {
       console.error(error);
-      toast("❌ List file lỗi");
       return;
     }
 
-    renderFiles(data || []);
-    toast("✅ Đã load danh sách file");
+    filesList.innerHTML = "";
+
+    if (!data.length) {
+      filesList.innerHTML = "<div class='tool-note'>Chưa có file nào.</div>";
+      return;
+    }
+
+    data.forEach((file) => {
+      const row = document.createElement("div");
+      row.style.display = "flex";
+      row.style.justifyContent = "space-between";
+      row.style.alignItems = "center";
+      row.style.marginBottom = "6px";
+
+      const name = document.createElement("span");
+      name.textContent = file.name;
+
+      const del = document.createElement("button");
+      del.textContent = "Xoá";
+      del.className = "btn-ghost";
+      del.onclick = () => deleteFile(file.name);
+
+      row.appendChild(name);
+      row.appendChild(del);
+      filesList.appendChild(row);
+    });
   }
 
-  async function uploadSelected() {
-    const client = getClient();
-    const user = await getUser(client);
-    if (!user) return toast("⚠️ Login trước đã");
+  async function deleteFile(name) {
+    if (!user) return;
 
-    const picker = document.getElementById("file-picker");
-    const file = picker?.files?.[0];
-    if (!file) return toast("Chọn file trước đã");
-
-    const path = `${user.id}/${Date.now()}-${file.name}`;
-
-    const { error } = await client.storage.from(BUCKET).upload(path, file, {
-      cacheControl: "3600",
-      upsert: false,
-    });
+    const { error } = await supabase
+      .storage
+      .from("twanhub-files")
+      .remove([`${user.id}/${name}`]);
 
     if (error) {
       console.error(error);
-      toast("❌ Upload lỗi");
       return;
     }
 
-    toast("✅ Upload xong");
-    await refreshList();
-    picker.value = "";
+    loadFiles();
   }
 
-  function init() {
-    const btnUpload = document.getElementById("btn-upload");
-    const btnRefresh = document.getElementById("btn-refresh-files");
-
-    btnUpload?.addEventListener("click", uploadSelected);
-    btnRefresh?.addEventListener("click", refreshList);
-  }
-
-  return { init, refreshList, uploadSelected };
+  return { init };
 })();
